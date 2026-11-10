@@ -1,0 +1,15 @@
+node_modules/
+release/
+dist/
+out/
+
+# 运行时/调试产物
+*.log
+selftest-layer-shots/
+selftest-deskpin.png
+shot-calib-*.png
+icon-check.png
+desktop-check.png
+
+.DS_Store
+Thumbs.db

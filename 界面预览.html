@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>原粹树脂 · 桌面小组件</title>
+<style>
+/* ---------- 配色方案 ---------- */
+:root,
+html[data-theme="gold"] {
+  --bg: rgba(19, 23, 32, .90);
+  --overlay: rgba(15, 18, 26, .97);
+  --soft: rgba(255, 255, 255, .055);
+  --gold-rgb: 233, 196, 129;
+  --gold: #e9c481;
+  --gold-2: #f7e3b5;
+  --gold-deep: #c9974f;
+  --on-accent: #2b2114;
+  --line: rgba(var(--gold-rgb), .18);
+  --text: #f3efe6;
+  --muted: rgba(243, 239, 230, .55);
+  --danger: #f08a7a;
+  --danger-2: #ffc4b6;
+  --danger-rgb: 240, 138, 122;
+}
+
+/* 晨霜：冷调冰蓝 */
+html[data-theme="frost"] {
+  --bg: rgba(16, 22, 32, .90);
+  --overlay: rgba(13, 18, 27, .97);
+  --soft: rgba(255, 255, 255, .06);
+  --gold-rgb: 154, 198, 240;
+  --gold: #9ac6f0;
+  --gold-2: #e2f0ff;
+  --gold-deep: #5d8fc4;
+  --on-accent: #101a26;
+  --line: rgba(154, 198, 240, .20);
+  --text: #eef4fb;
+  --muted: rgba(238, 244, 251, .55);
+}
+
+/* 翠玉：风元素的青绿 */
+html[data-theme="jade"] {
+  --bg: rgba(14, 26, 24, .90);
+  --overlay: rgba(11, 22, 20, .97);
+  --soft: rgba(255, 255, 255, .06);
+  --gold-rgb: 138, 217, 181;
+  --gold: #8ad9b5;
+  --gold-2: #d9f6e9;
+  --gold-deep: #4c9a79;
+  --on-accent: #0c1f19;
+  --line: rgba(138, 217, 181, .20);
+  --text: #eaf6f0;
+  --muted: rgba(234, 246, 240, .55);
+}
+
+/* 樱花：粉调 */
+html[data-theme="sakura"] {
+  --bg: rgba(30, 19, 27, .90);
+  --overlay: rgba(26, 15, 23, .97);
+  --soft: rgba(255, 255, 255, .06);
+  --gold-rgb: 240, 168, 192;
+  --gold: #f0a8c0;
+  --gold-2: #ffe0ec;
+  --gold-deep: #c06687;
+  --on-accent: #2a1120;
+  --line: rgba(240, 168, 192, .20);
+  --text: #fdeef4;
+  --muted: rgba(253, 238, 244, .55);
+}
+
+/* 暮紫：雷元素的紫 */
+html[data-theme="violet"] {
+  --bg: rgba(23, 18, 34, .90);
+  --overlay: rgba(19, 14, 29, .97);
+  --soft: rgba(255, 255, 255, .06);
+  --gold-rgb: 185, 162, 240;
+  --gold: #b9a2f0;
+  --gold-2: #e7ddff;
+  --gold-deep: #7a62c4;
+  --on-accent: #1a1030;
+  --line: rgba(185, 162, 240, .20);
+  --text: #f0ecfb;
+  --muted: rgba(240, 236, 251, .55);
+}
+
+/* 石墨：低调银灰，适合配深色壁纸 */
+html[data-theme="graphite"] {
+  --bg: rgba(24, 26, 30, .92);
+  --overlay: rgba(19, 21, 25, .97);
+  --soft: rgba(255, 255, 255, .06);
+  --gold-rgb: 186, 195, 208;
+  --gold: #bac3d0;
+  --gold-2: #eef1f6;
+  --gold-deep: #6f7987;
+  --on-accent: #14171c;
+  --line: rgba(186, 195, 208, .20);
+  --text: #eceef2;
+  --muted: rgba(236, 238, 242, .50);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 浏览器预览时给一个桌面背景，方便看效果 */
+html.preview body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(900px 520px at 18% 12%, rgba(120, 158, 196, .55), transparent 65%),
+    radial-gradient(760px 560px at 82% 88%, rgba(196, 158, 118, .45), transparent 62%),
+    linear-gradient(145deg, #dfe8f2 0%, #cfd9e7 42%, #e5dccd 100%);
+}
+html.preview .widget {
+  width: 344px;
+  height: var(--preview-height, 292px);
+  box-shadow: 0 28px 70px rgba(28, 36, 52, .38), 0 4px 14px rgba(28, 36, 52, .22);
+  transition: height .18s ease;
+}
+
+.widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: var(--bg);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  backdrop-filter: blur(20px) saturate(1.25);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .40), inset 0 1px 0 rgba(255, 255, 255, .08);
+  overflow: hidden;
+}
+.widget::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(125% 85% at 100% 0%, rgba(var(--gold-rgb), .14), transparent 62%);
+  pointer-events: none;
+}
+
+.titlebar {
+  position: relative;
+  z-index: 2;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 9px 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, .065);
+  -webkit-app-region: drag;
+}
+.brand { display: flex; align-items: center; gap: 7px; min-width: 0; flex: none; }
+.brand-mark { color: var(--gold); font-size: 14px; }
+.brand-text { font-size: 12.5px; letter-spacing: .08em; white-space: nowrap; }
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); margin-left: 5px;
+  box-shadow: 0 0 8px currentColor;
+}
+.status-text {
+  font-size: 10px; color: var(--muted);
+  max-width: 96px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.window-actions { display: flex; gap: 2px; -webkit-app-region: no-drag; }
+.window-actions button {
+  width: 24px; height: 24px; line-height: 1;
+  border: 0; border-radius: 7px;
+  background: transparent; color: var(--muted);
+  font-size: 13px; cursor: pointer;
+}
+.window-actions button:hover { background: rgba(255, 255, 255, .10); color: var(--text); }
+
+.view {
+  position: absolute; top: 38px; left: 0; right: 0; bottom: 0;
+  -webkit-app-region: no-drag;
+}
+.view-main { padding: 12px 16px 10px; }
+.main-body { display: flex; flex-direction: column; }
+
+/* 单账号：保留原来的大号面板，顶部加一条账号信息 */
+.solo-head {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 7px;
+}
+.solo-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.solo-id b {
+  font-size: 11.5px; font-weight: 600; max-width: 150px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.solo-id small { font-size: 8.5px; color: var(--muted); }
+.solo-sync { margin-left: auto; font-size: 8.5px; color: var(--muted); flex: none; }
+
+.hero { display: flex; align-items: center; gap: 6px; height: 118px; }
+.hero-left { flex: 1; min-width: 0; }
+.resin-number { display: flex; align-items: baseline; gap: 6px; line-height: 1; }
+#resinValue {
+  font-size: 50px; font-weight: 300; letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums; color: var(--gold-2);
+  text-shadow: 0 2px 20px rgba(var(--gold-rgb), .30);
+}
+.resin-max { font-size: 14px; color: var(--muted); }
+.resin-label { font-size: 9px; letter-spacing: .20em; color: var(--muted); margin-top: 7px; }
+.divider {
+  height: 1px; margin: 11px 0 9px;
+  background: linear-gradient(90deg, var(--line), transparent);
+}
+.metric { display: flex; justify-content: space-between; align-items: baseline; margin-top: 5px; }
+.metric-key { font-size: 10.5px; color: var(--muted); }
+.metric-value { font-size: 12.5px; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.metric-value.small { font-size: 11px; color: var(--gold); }
+
+.hero-right { position: relative; width: 112px; height: 112px; flex: none; }
+.ring { width: 112px; height: 112px; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: rgba(255, 255, 255, .09); stroke-width: 7; }
+.ring-fg {
+  fill: none; stroke: url(#ringGrad); stroke-width: 7; stroke-linecap: round;
+  stroke-dasharray: 314.159; stroke-dashoffset: 314.159;
+  transition: stroke-dashoffset .6s ease;
+  filter: drop-shadow(0 0 5px rgba(var(--gold-rgb), .38));
+}
+.widget.is-overflow .ring-fg { filter: drop-shadow(0 0 6px rgba(var(--danger-rgb), .6)); }
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.ring-icon { color: var(--gold); font-size: 13px; opacity: .85; }
+.ring-next-label { font-size: 9px; color: var(--muted); letter-spacing: .12em; }
+.ring-next { font-size: 15px; font-variant-numeric: tabular-nums; }
+
+.extra { display: flex; gap: 6px; margin-top: 9px; }
+.extra span {
+  flex: 1; text-align: center; font-size: 10px; color: var(--muted);
+  background: var(--soft); border: 1px solid rgba(255, 255, 255, .05);
+  padding: 5px 0; border-radius: 8px;
+}
+.extra b { color: var(--gold); font-weight: 600; margin-left: 3px; }
+.extra.dim { opacity: .45; }
+
+.local-hint { margin-top: 7px; font-size: 9.5px; color: var(--muted); opacity: .8; }
+.alert {
+  margin-top: 7px; padding: 6px 9px; border-radius: 8px; font-size: 10px;
+  background: rgba(var(--danger-rgb), .14); border: 1px solid rgba(var(--danger-rgb), .32);
+  color: var(--danger-2);
+}
+.risk-bar {
+  margin-top: 7px; padding: 6px 9px; border-radius: 8px; font-size: 9.5px; line-height: 1.5;
+  background: rgba(var(--danger-rgb), .14); border: 1px solid rgba(var(--danger-rgb), .32);
+  color: var(--danger-2); display: flex; align-items: center; gap: 6px;
+}
+.risk-bar span { flex: 1; }
+.footbar {
+  margin-top: 10px; display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, .06); padding-top: 7px;
+}
+.link-btn { background: none; border: 0; color: var(--gold); font-size: 11px; cursor: pointer; padding: 2px 0; }
+.link-btn:hover { color: var(--gold-2); }
+.spacer { flex: 1; }
+.source-tag { font-size: 9.5px; color: var(--muted); }
+
+/* ---------- 设置 ---------- */
+.settings-head {
+  height: 34px; display: flex; align-items: center; gap: 8px;
+  padding: 0 12px; border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.settings-head h2 { margin: 0; font-size: 12px; font-weight: 500; letter-spacing: .1em; }
+.settings-head .hint { margin-left: auto; font-size: 9px; color: var(--muted); }
+.back-btn {
+  width: 22px; height: 22px; border: 0; border-radius: 6px;
+  background: rgba(255, 255, 255, .06); color: var(--text); cursor: pointer; font-size: 12px;
+}
+.settings-body { height: calc(100% - 34px); overflow-y: auto; padding: 10px 14px 14px; }
+.settings-body::-webkit-scrollbar { width: 5px; }
+.settings-body::-webkit-scrollbar-thumb { background: rgba(var(--gold-rgb), .28); border-radius: 3px; }
+
+.field-group { margin-bottom: 10px; }
+.field-group > label { display: block; font-size: 10px; letter-spacing: .14em; color: var(--gold); margin-bottom: 6px; }
+.radio-row { display: flex; gap: 4px; }
+.seg {
+  flex: 1; font-size: 10px; padding: 6px 0; border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, .10); background: rgba(255, 255, 255, .03);
+  color: var(--muted); cursor: pointer;
+}
+.seg.active { background: rgba(var(--gold-rgb), .16); border-color: rgba(var(--gold-rgb), .50); color: var(--gold-2); }
+.panel {
+  background: rgba(255, 255, 255, .035); border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 10px; padding: 10px; margin: 8px 0 12px;
+}
+.row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.row > label { width: 96px; flex: none; font-size: 10.5px; color: var(--muted); }
+.row > label em { font-style: normal; color: var(--gold); font-size: 9px; }
+.row input, .row select, .row textarea {
+  flex: 1; min-width: 0; font-family: inherit; font-size: 11px;
+  background: rgba(0, 0, 0, .26); border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 6px; color: var(--text); padding: 5px 7px; outline: none;
+}
+.row input:focus, .row select:focus, .row textarea:focus { border-color: rgba(var(--gold-rgb), .55); }
+.row textarea { resize: none; line-height: 1.4; }
+.row input::placeholder, .row textarea::placeholder { color: var(--muted); }
+.desc { font-size: 9.5px; line-height: 1.55; color: var(--muted); margin: 6px 0 0; }
+.primary {
+  background: linear-gradient(180deg, var(--gold-2), var(--gold-deep)); border: 0; color: var(--on-accent);
+  font-size: 11px; font-weight: 600; padding: 7px 14px; border-radius: 7px; cursor: pointer;
+}
+.primary:hover { filter: brightness(1.08); }
+.primary.wide { width: 100%; }
+.ghost {
+  background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12);
+  color: var(--text); font-size: 10px; padding: 5px 10px; border-radius: 6px; cursor: pointer;
+}
+.ghost:hover { background: rgba(255, 255, 255, .10); }
+.switch-row { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 7px; }
+.switch-row input { accent-color: var(--gold); width: 14px; height: 14px; cursor: pointer; }
+.footnote { font-size: 9px; color: var(--muted); opacity: .75; line-height: 1.5; margin: 10px 0 0; }
+
+/* ---------- 米游社账号 / 扫码登录 ---------- */
+.account-card {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px; margin-bottom: 9px; border-radius: 9px;
+  background: rgba(var(--gold-rgb), .08); border: 1px solid rgba(var(--gold-rgb), .20);
+}
+.account-avatar {
+  width: 28px; height: 28px; flex: none; display: grid; place-items: center;
+  border-radius: 50%; background: rgba(var(--gold-rgb), .18); color: var(--gold); font-size: 13px;
+}
+.account-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.account-meta b { font-size: 11px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-meta small { font-size: 9px; color: var(--muted); }
+.ghost.tiny { font-size: 9.5px; padding: 4px 8px; flex: none; }
+
+.advanced { margin-top: 9px; border-top: 1px solid rgba(255, 255, 255, .07); padding-top: 7px; }
+.advanced summary { font-size: 10px; color: var(--muted); cursor: pointer; outline: none; }
+.advanced summary:hover { color: var(--gold); }
+.risk-tip {
+  margin-top: 9px; padding: 7px 9px; border-radius: 8px; font-size: 9.5px; line-height: 1.5;
+  background: rgba(var(--danger-rgb), .12); border: 1px solid rgba(var(--danger-rgb), .28); color: var(--danger-2);
+  display: flex; align-items: center; gap: 6px;
+}
+.risk-tip span { flex: 1; }
+
+.qr-overlay {
+  position: absolute; z-index: 8; inset: 0;
+  background: var(--overlay);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  display: flex; flex-direction: column;
+}
+.qr-head {
+  height: 38px; flex: none; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 10px 0 15px; border-bottom: 1px solid rgba(255, 255, 255, .07);
+  font-size: 12px; letter-spacing: .08em; -webkit-app-region: drag;
+}
+.qr-head button {
+  width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent;
+  color: var(--muted); font-size: 17px; cursor: pointer; -webkit-app-region: no-drag;
+}
+.qr-head button:hover { background: rgba(255, 255, 255, .10); color: var(--text); }
+.qr-body {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 7px; padding: 8px 14px 12px; -webkit-app-region: no-drag;
+}
+.qr-frame {
+  position: relative; width: 132px; height: 132px; padding: 5px;
+  background: #fff; border-radius: 9px; box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+}
+.qr-frame img { width: 122px; height: 122px; display: block; image-rendering: pixelated; }
+.qr-cover {
+  position: absolute; inset: 5px; display: grid; place-items: center;
+  background: rgba(255, 255, 255, .92); color: var(--on-accent);
+  font-size: 11px; font-weight: 600; border-radius: 5px; text-align: center; padding: 8px;
+}
+.qr-status { font-size: 11px; color: var(--gold-2); text-align: center; min-height: 15px; }
+.qr-hint { font-size: 9.5px; color: var(--muted); text-align: center; line-height: 1.5; }
+.qr-mode { font-size: 9px; color: var(--muted); opacity: .8; text-align: center; }
+.qr-actions { display: flex; gap: 8px; margin-top: 4px; }
+.qr-actions .ghost { font-size: 10px; }
+
+.toast {
+  position: absolute; z-index: 9; bottom: 12px; left: 50%; transform: translateX(-50%);
+  max-width: 88%; padding: 7px 12px; border-radius: 8px; font-size: 10.5px;
+  background: var(--overlay); border: 1px solid var(--line); color: var(--gold-2);
+  text-align: center; line-height: 1.4;
+}
+
+/* ---------- 多账号 ---------- */
+.accounts-btn { position: relative; }
+.accounts-btn em {
+  position: absolute; top: 1px; right: 0;
+  min-width: 11px; height: 11px; padding: 0 2px;
+  border-radius: 6px; background: var(--gold); color: var(--on-accent);
+  font-size: 8px; font-style: normal; line-height: 11px; text-align: center;
+}
+
+.accounts-sheet {
+  position: absolute; z-index: 8; inset: 0;
+  background: var(--overlay);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  display: flex; flex-direction: column;
+}
+.sheet-head {
+  height: 38px; flex: none; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 10px 0 15px; border-bottom: 1px solid rgba(255, 255, 255, .07);
+  font-size: 12px; letter-spacing: .08em; -webkit-app-region: drag;
+}
+.sheet-head button {
+  width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent;
+  color: var(--muted); font-size: 17px; cursor: pointer; -webkit-app-region: no-drag;
+}
+.sheet-head button:hover { background: rgba(255, 255, 255, .10); color: var(--text); }
+.sheet-foot {
+  flex: none; padding: 8px 10px 10px;
+  border-top: 1px solid rgba(255, 255, 255, .07);
+}
+.acct-list {
+  flex: 1; overflow-y: auto; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.acct-list::-webkit-scrollbar { width: 4px; }
+.acct-list::-webkit-scrollbar-thumb { background: rgba(var(--gold-rgb), .28); border-radius: 2px; }
+.acct-row {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 8px; border-radius: 9px; text-align: left; font-family: inherit;
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .07);
+  color: var(--text);
+}
+.acct-avatar {
+  width: 24px; height: 24px; flex: none; display: grid; place-items: center;
+  border-radius: 50%; background: rgba(var(--gold-rgb), .18);
+  color: var(--gold); font-size: 11px;
+}
+.acct-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.acct-name {
+  font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.acct-meta { font-size: 8.5px; color: var(--muted); }
+.acct-resin {
+  flex: none; font-size: 10.5px; color: var(--gold);
+  font-variant-numeric: tabular-nums; letter-spacing: .01em;
+}
+.acct-del {
+  flex: none; width: 18px; height: 18px; border: 0; border-radius: 5px;
+  background: transparent; color: var(--muted);
+  font-size: 12px; line-height: 1; cursor: pointer;
+}
+.acct-del:hover { background: rgba(var(--danger-rgb), .22); color: var(--danger-2); }
+.acct-empty {
+  font-size: 9.5px; color: var(--muted); text-align: center;
+  padding: 16px 8px; line-height: 1.6;
+}
+
+.account-section { margin-bottom: 9px; }
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 9.5px; color: var(--muted); margin-bottom: 5px;
+}
+.section-hint { color: var(--gold); }
+.acct-list.compact { max-height: 112px; overflow-y: auto; padding: 0; gap: 4px; }
+.acct-list.compact .acct-row { padding: 5px 6px; }
+.acct-list.compact .acct-avatar { width: 19px; height: 19px; font-size: 9px; }
+.acct-list.compact .acct-name { font-size: 9.5px; }
+.acct-list.compact .acct-meta { display: none; }
+.acct-list.compact .acct-resin { font-size: 9.5px; }
+
+/* ---------- 主界面：多账号并列卡片 ---------- */
+.multi-list {
+  display: flex; flex-direction: column; gap: 7px;
+  max-height: 640px; overflow-y: auto; overflow-x: hidden;
+}
+.multi-list::-webkit-scrollbar { width: 4px; }
+.multi-list::-webkit-scrollbar-thumb { background: rgba(var(--gold-rgb), .28); border-radius: 2px; }
+
+.ac-card {
+  position: relative; flex: none;
+  padding: 9px 11px 8px; border-radius: 12px;
+  background: var(--soft); border: 1px solid rgba(255, 255, 255, .07);
+}
+.ac-head { display: flex; align-items: center; gap: 8px; }
+.ac-avatar {
+  width: 22px; height: 22px; flex: none; display: grid; place-items: center;
+  border-radius: 50%; background: rgba(var(--gold-rgb), .18);
+  color: var(--gold); font-size: 10px; line-height: 1;
+}
+.ac-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ac-name {
+  font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ac-uid { font-size: 8.5px; color: var(--muted); }
+.ac-resin {
+  margin-left: auto; flex: none; display: flex; align-items: baseline; gap: 2px;
+  font-variant-numeric: tabular-nums; color: var(--gold-2);
+}
+.ac-resin b { font-size: 19px; font-weight: 300; letter-spacing: -.02em; }
+.ac-resin small { font-size: 9.5px; color: var(--muted); }
+.ac-bar {
+  height: 4px; border-radius: 3px; background: rgba(255, 255, 255, .09);
+  margin: 7px 0 6px; overflow: hidden;
+}
+.ac-bar i {
+  display: block; height: 100%; width: 0; border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold-2));
+  transition: width .5s ease;
+}
+.ac-meta { display: flex; align-items: baseline; gap: 11px; font-size: 9px; color: var(--muted); }
+.ac-meta b { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ac-meta .ac-extra { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ac-meta .ac-err { margin-left: auto; flex: none; color: var(--danger); }
+.ac-card.is-overflow { border-color: rgba(var(--danger-rgb), .45); }
+.ac-card.is-overflow .ac-bar i { background: linear-gradient(90deg, #d4664f, #f0a08a); }
+.ac-card.is-overflow .ac-resin b { color: var(--danger-2); }
+
+/* ---------- 界面缩放 ---------- */
+.scale-row input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  flex: 1; min-width: 0; height: 5px; padding: 0; border: 0; border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--gold-rgb), .85) 0%,
+    rgba(var(--gold-rgb), .85) var(--pct, 30%),
+    rgba(255, 255, 255, .14) var(--pct, 30%),
+    rgba(255, 255, 255, .14) 100%
+  );
+  cursor: pointer;
+}
+.scale-row input[type="range"]:focus { border: 0; }
+.scale-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--gold-2); border: 1px solid rgba(0, 0, 0, .30);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+  cursor: pointer;
+}
+.scale-reset {
+  flex: none; width: 42px; padding: 4px 0; font-size: 9.5px; font-family: inherit;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 6px; color: var(--gold-2); cursor: pointer;
+}
+.scale-reset:hover { background: rgba(255, 255, 255, .12); }
+
+/* 预览模式下的界面缩放，模拟桌面版窗口等比变化 */
+html.preview .widget {
+  transform: scale(var(--preview-scale, 1));
+  transform-origin: center center;
+}
+
+/* ---------- 配色选择 ---------- */
+.theme-row { display: flex; align-items: center; gap: 9px; padding: 2px 0 1px; }
+.theme-dot {
+  width: 22px; height: 22px; padding: 0; flex: none;
+  border-radius: 50%; border: 1px solid rgba(255, 255, 255, .22);
+  background: radial-gradient(circle at 32% 28%, var(--sw2), var(--sw) 60%, var(--sw3));
+  cursor: pointer; position: relative;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.theme-dot:hover { transform: scale(1.10); }
+.theme-dot.active {
+  box-shadow: 0 0 0 2px rgba(var(--gold-rgb), .60), 0 0 12px rgba(var(--gold-rgb), .35);
+  transform: scale(1.06);
+}
+.theme-dot[data-theme="gold"] { --sw: #e9c481; --sw2: #f7e3b5; --sw3: #c9974f; }
+.theme-dot[data-theme="frost"] { --sw: #9ac6f0; --sw2: #e2f0ff; --sw3: #5d8fc4; }
+.theme-dot[data-theme="jade"] { --sw: #8ad9b5; --sw2: #d9f6e9; --sw3: #4c9a79; }
+.theme-dot[data-theme="sakura"] { --sw: #f0a8c0; --sw2: #ffe0ec; --sw3: #c06687; }
+.theme-dot[data-theme="violet"] { --sw: #b9a2f0; --sw2: #e7ddff; --sw3: #7a62c4; }
+.theme-dot[data-theme="graphite"] { --sw: #bac3d0; --sw2: #eef1f6; --sw3: #6f7987; }
+
+/* 标题栏的「钉」按钮：固定在桌面时点亮 */
+#btnPin {
+  font-size: 10px; letter-spacing: .02em;
+  color: var(--muted);
+}
+#btnPin.on {
+  color: var(--gold-2);
+  background: rgba(var(--gold-rgb), .18);
+  box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), .40);
+}
+
+/* ---------- 手动校准浮层 ---------- */
+.calib-sheet {
+  position: absolute; z-index: 8; inset: 0;
+  background: var(--overlay);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  display: flex; flex-direction: column;
+}
+.calib-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 10px 12px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.calib-body::-webkit-scrollbar { width: 4px; }
+.calib-body::-webkit-scrollbar-thumb { background: rgba(var(--gold-rgb), .28); border-radius: 2px; }
+.calib-accounts { display: flex; flex-wrap: wrap; gap: 5px; }
+.calib-account {
+  max-width: 100%; padding: 3px 8px; border-radius: 999px; cursor: pointer;
+  font-family: inherit; font-size: 9.5px; line-height: 1.4;
+  background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .10);
+  color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.calib-account:hover { color: var(--text); }
+.calib-account.active {
+  color: var(--gold-2); border-color: rgba(var(--gold-rgb), .45);
+  background: rgba(var(--gold-rgb), .16);
+}
+.calib-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.calib-chip {
+  padding: 2px 8px; border-radius: 6px; cursor: pointer;
+  font-family: inherit; font-size: 9.5px; font-variant-numeric: tabular-nums;
+  background: transparent; border: 1px solid rgba(255, 255, 255, .10); color: var(--muted);
+}
+.calib-chip:hover { color: var(--gold-2); border-color: rgba(var(--gold-rgb), .40); }
+.calib-actions { display: flex; gap: 7px; margin-top: 2px; }
+.calib-actions button { flex: 1; }
+.calib-body .desc { margin: 0; }
+
+/* 每张账号卡片上的校准入口 */
+.ac-calib {
+  flex: none; margin-left: 4px;
+  width: 18px; height: 18px; padding: 0; line-height: 1;
+  border: 1px solid rgba(255, 255, 255, .08); border-radius: 5px;
+  background: rgba(255, 255, 255, .05); color: var(--muted);
+  font-size: 11px; cursor: pointer; opacity: .6;
+  transition: opacity .14s ease, color .14s ease, background .14s ease;
+}
+.ac-card:hover .ac-calib { opacity: .9; }
+.ac-calib:hover { opacity: 1; background: rgba(255, 255, 255, .10); color: var(--gold-2); }
+
+/* 钉在桌面时窗口是桌面子窗口，系统标题栏拖动会失效，改用手动拖动 */
+html[data-pinned="1"] .titlebar { -webkit-app-region: no-drag; }
+
+/* 数字输入框去掉系统微调按钮：深色底上会糊成一块灰块 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+</style>
+</head>
+<body>
+<div class="widget" id="widget">
+
+  <header class="titlebar" id="dragHandle">
+    <div class="brand">
+      <span class="brand-mark">✦</span>
+      <span class="brand-text">原粹树脂</span>
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">加载中</span>
+    </div>
+    <div class="window-actions no-drag">
+      <button id="btnAccounts" class="accounts-btn" title="账号管理">◉<em id="accountCount" hidden>0</em></button>
+      <button id="btnRefresh" title="立即同步">⟳</button>
+      <button id="btnPin" title="固定在桌面">钉</button>
+      <button id="btnSettings" title="设置">⚙</button>
+      <button id="btnHide" title="隐藏到托盘">─</button>
+    </div>
+  </header>
+
+  <section class="view view-main" id="viewMain">
+    <div class="main-body" id="mainBody">
+
+      <div class="solo-card" id="soloCard">
+        <div class="solo-head" id="soloHead" hidden>
+          <span class="ac-avatar" id="soloAvatar">✦</span>
+          <span class="solo-id">
+            <b id="soloName">—</b>
+            <small id="soloUid"></small>
+          </span>
+          <span class="solo-sync" id="soloSync"></span>
+        </div>
+        <div class="hero">
+          <div class="hero-left">
+            <div class="resin-number">
+              <span id="resinValue">--</span><span class="resin-max">/ <span id="resinMax">200</span></span>
+            </div>
+            <div class="resin-label">ORIGINAL RESIN</div>
+            <div class="divider"></div>
+            <div class="metric">
+              <span class="metric-key">距离回满</span>
+              <span class="metric-value" id="fullCountdown">--:--:--</span>
+            </div>
+            <div class="metric">
+              <span class="metric-key">回满时刻</span>
+              <span class="metric-value small" id="fullClock">--</span>
+            </div>
+          </div>
+          <div class="hero-right">
+            <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" style="stop-color: var(--gold-2)"/>
+                  <stop offset="55%" style="stop-color: var(--gold)"/>
+                  <stop offset="100%" style="stop-color: var(--gold-deep)"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="ring-center">
+              <span class="ring-icon">◆</span>
+              <span class="ring-next-label">下一枚</span>
+              <span class="ring-next" id="nextCountdown">--:--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="multi-list" id="multiList" hidden></div>
+
+      <div class="extra" id="extraRow">
+        <span>委托 <b id="taskValue">--</b></span>
+        <span>派遣 <b id="expeditionValue">--</b></span>
+        <span>周本 <b id="discountValue">--</b></span>
+      </div>
+
+      <div class="local-hint" id="localHint" hidden>按每 8 分钟 +1 推算 · 从 0 回满 200 点需 26 小时 40 分</div>
+      <div class="alert" id="overflowAlert" hidden>⚠ 树脂即将溢出，记得上线消耗</div>
+      <div class="risk-bar" id="riskBar" hidden>
+        <span id="riskBarText"></span>
+        <button class="ghost tiny" id="btnRecheck">重新检测</button>
+        <button class="ghost tiny" id="btnVerify">验证</button>
+      </div>
+
+      <footer class="footbar">
+        <button class="link-btn" id="btnCalibrate">手动校准</button>
+        <button class="link-btn" id="btnAddAccountMain" hidden>＋ 添加账号</button>
+        <span class="spacer"></span>
+        <span class="source-tag" id="sourceTag">本地推算</span>
+      </footer>
+    </div>
+  </section>
+
+  <section class="view view-settings" id="viewSettings" hidden>
+    <div class="settings-head">
+      <button class="back-btn" id="btnBack" title="返回">←</button>
+      <h2>设置</h2>
+      <span class="hint">数据仅存本机</span>
+    </div>
+    <div class="settings-body">
+
+      <div class="field-group">
+        <label>数据来源</label>
+        <div class="radio-row">
+          <button class="seg" data-source="local">本地推算</button>
+          <button class="seg" data-source="mihoyo">米游社同步</button>
+          <button class="seg" data-source="custom">自定义接口</button>
+        </div>
+        <p class="desc" id="sourceDesc"></p>
+      </div>
+
+      <div class="panel" id="panelLocal">
+        <div class="row">
+          <label>当前树脂</label>
+          <input id="inResin" type="number" min="0" max="2000" placeholder="例如 148">
+        </div>
+        <div class="row">
+          <label>下一枚还需</label>
+          <input id="inNext" type="text" placeholder="可选，mm:ss">
+        </div>
+        <button class="primary" id="btnApplyCalibrate">保存校准</button>
+        <p class="desc">填一次就能一直用：之后按每 8 分钟 1 点自动增长，关机重开也会接着算。填「下一枚还需」可校准得更准。</p>
+      </div>
+
+      <div class="panel" id="panelMihoyo" hidden>
+        <div class="account-card">
+          <span class="account-avatar">✦</span>
+          <div class="account-meta">
+            <b id="accountLabel">未登录</b>
+            <small id="accountSub">扫码登录后可自动同步</small>
+          </div>
+          <button class="ghost tiny" id="btnLogout" hidden>移除</button>
+        </div>
+
+        <div class="account-section" id="accountSection" hidden>
+          <div class="section-head">
+            <span>已保存账号</span>
+            <span class="section-hint" id="accountTotal"></span>
+          </div>
+          <div class="acct-list compact" id="accountListSettings"></div>
+        </div>
+
+        <button class="primary wide" id="btnQrLogin">扫码登录米游社</button>
+        <p class="desc">米游社 App → 右上角「扫一扫」→ 手机上确认。会自动读取 UID 与服务器，凭证加密存本机；登录过期可用 stoken 自动续期，不用再复制 Cookie。</p>
+
+        <div class="row"><label>UID</label><input id="inUid" type="text" placeholder="扫码后自动填入"></div>
+        <div class="row">
+          <label>服务器</label>
+          <select id="inServer">
+            <option value="cn_gf01">官服 · 天空岛</option>
+            <option value="cn_qd01">渠道服 · 世界树</option>
+            <option value="os_asia">国际服 · 亚服</option>
+            <option value="os_euro">国际服 · 欧服</option>
+            <option value="os_usa">国际服 · 美服</option>
+            <option value="os_cht">国际服 · 港澳台</option>
+          </select>
+        </div>
+
+        <details class="advanced">
+          <summary>高级：手动填写 Cookie / 读取角色</summary>
+          <div class="row" style="margin-top:8px">
+            <label>Cookie <em id="cookieState"></em></label>
+            <textarea id="inCookie" rows="3" placeholder="粘贴米游社 Cookie；留空表示不修改"></textarea>
+          </div>
+          <button class="ghost" id="btnFetchRoles">读取我的角色</button>
+          <p class="desc">手动 Cookie 无法自动续期，建议优先扫码。Cookie 加密保存在本机，不回显界面，只发往米游社官方域名。</p>
+        </details>
+
+        <div class="risk-tip" id="riskTip" hidden>
+          <span id="riskText">⚠ 米游社风控：请在米游社 App 打开一次实时便笺。</span>
+          <button class="ghost tiny" id="btnVerifySettings">尝试滑块验证</button>
+        </div>
+        <p class="desc">若提示 5003 / 1034，说明触发了米游社设备校验或人机验证。点「验证当前用户」完成滑块即可恢复；也可以在米游社 App 打开一次「我的角色 → 实时便笺」后点刷新。</p>
+      </div>
+
+      <div class="panel" id="panelCustom" hidden>
+        <div class="row">
+          <label>接口 URL</label>
+          <input id="inCustomUrl" type="text" placeholder="https://your-api/resin">
+        </div>
+        <p class="desc">可接自建云函数或开源代理。支持米游社原始 JSON，也支持简化格式：{"resin":148,"max_resin":200,"resin_recovery_time":3600}。</p>
+      </div>
+
+      <div class="field-group">
+        <label>配色方案</label>
+        <div class="theme-row" id="themeRow">
+          <button class="theme-dot" data-theme="gold" title="金曜 · 默认"></button>
+          <button class="theme-dot" data-theme="frost" title="晨霜"></button>
+          <button class="theme-dot" data-theme="jade" title="翠玉"></button>
+          <button class="theme-dot" data-theme="sakura" title="樱花"></button>
+          <button class="theme-dot" data-theme="violet" title="暮紫"></button>
+          <button class="theme-dot" data-theme="graphite" title="石墨"></button>
+        </div>
+        <p class="desc" id="themeDesc">点一下立即换色，只影响本机外观。</p>
+      </div>
+
+      <div class="field-group">
+        <label>通用</label>
+        <div class="row"><label>恢复上限</label><input id="inMax" type="number" min="1" value="200"></div>
+        <div class="row"><label>溢出提醒阈值</label><input id="inNotify" type="number" min="1" value="190"></div>
+        <div class="row"><label>同步间隔（秒）</label><input id="inInterval" type="number" min="180" value="300"></div>
+        <p class="desc">建议 ≥ 300 秒。请求过密会触发米游社风控；同步失败后会自动拉长间隔。</p>
+        <div class="row scale-row">
+          <label>界面缩放</label>
+          <input id="inScale" type="range" min="70" max="180" step="5" value="100">
+          <button class="scale-reset" id="btnScaleReset" title="点击恢复 100%">100%</button>
+        </div>
+        <p class="desc">拖动滑块，或按住 Ctrl 滚动鼠标滚轮。窗口会等比缩放，排版与功能不受影响。</p>
+        <div class="switch-row"><label>固定在桌面</label><input id="inDeskPin" type="checkbox"></div>
+        <p class="desc">开启后挂在桌面壁纸上：不会被最大化的窗口挡住，也不会挡住你正在用的程序。与「始终置顶」互斥。</p>
+        <div class="switch-row"><label>始终置顶</label><input id="inTop" type="checkbox"></div>
+        <div class="switch-row"><label>开机自启</label><input id="inAutoStart" type="checkbox"></div>
+      </div>
+
+      <button class="primary wide" id="btnSave">保存并同步</button>
+      <p class="footnote">仅读取您本人账号的数据，不读取游戏内存、不修改游戏、不向任何第三方上传信息。米游社接口为非公开接口，可能随版本调整。</p>
+    </div>
+  </section>
+
+  <div class="calib-sheet" id="calibSheet" hidden>
+    <div class="sheet-head">
+      <span id="calibTitle">手动校准</span>
+      <button id="btnCalibClose" title="关闭">×</button>
+    </div>
+    <div class="calib-body">
+      <div class="calib-accounts" id="calibAccounts" hidden></div>
+      <div class="row">
+        <label>当前树脂</label>
+        <input id="inCalibResin" type="number" min="0" max="2000" placeholder="例如 148">
+      </div>
+      <div class="calib-chips" id="calibChips"></div>
+      <div class="row">
+        <label>下一枚还需</label>
+        <input id="inCalibNext" type="text" placeholder="可选，mm:ss">
+      </div>
+      <p class="desc" id="calibDesc">按游戏内实际数值填写即可。保存后按每 8 分钟 1 点自动推算，关机重开也会接着算。</p>
+      <div class="calib-actions">
+        <button class="ghost" id="btnCalibCancel">取消</button>
+        <button class="primary" id="btnCalibSave">保存校准</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="accounts-sheet" id="accountsSheet" hidden>
+    <div class="sheet-head">
+      <span>账号</span>
+      <button id="btnAccountsClose" title="关闭">×</button>
+    </div>
+    <div class="acct-list" id="accountListSheet"></div>
+    <div class="sheet-foot">
+      <button class="primary wide" id="btnAddAccount">＋ 添加账号（扫码登录）</button>
+    </div>
+  </div>
+
+  <div class="qr-overlay" id="qrOverlay" hidden>
+    <div class="qr-head">
+      <span>米游社扫码登录</span>
+      <button id="btnQrClose" title="关闭">×</button>
+    </div>
+    <div class="qr-body">
+      <div class="qr-frame">
+        <img id="qrImage" alt="米游社登录二维码">
+        <div class="qr-cover" id="qrCover" hidden></div>
+      </div>
+      <div class="qr-status" id="qrStatusText">正在生成二维码…</div>
+      <div class="qr-hint">米游社 App → 右上角「扫一扫」→ 在手机上点确认登录</div>
+      <div class="qr-mode" id="qrMode"></div>
+      <div class="qr-actions">
+        <button class="ghost" id="btnQrRefresh">刷新二维码</button>
+        <button class="ghost" id="btnQrCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+</div>
+<script>
+'use strict';
+
+/* 界面逻辑：既可跑在 Electron 里，也可直接用浏览器打开预览 */
+const hostBridge = (window.resinWidget && typeof window.resinWidget.getState === 'function')
+  ? window.resinWidget
+  : null;
+const isPreview = hostBridge === null;
+if (isPreview) document.documentElement.classList.add('preview');
+
+const RESIN_SECONDS = 480;
+const RING_CIRCUMFERENCE = 2 * Math.PI * 50;
+const BASE_HEIGHT = 292;
+const DEFAULT_MAX = 200;
+const $ = (id) => document.getElementById(id);
+const pad = (n) => String(n).padStart(2, '0');
+
+const STATUS_COLORS = {
+  ok: '#7fd6b0',
+  local: '#e9c481',
+  syncing: '#8fb8ee',
+  error: '#f08a7a',
+  uncalibrated: '#8f96a3',
+  idle: '#8f96a3',
+};
+
+const SOURCE_LABELS = {
+  local: '本地推算',
+  mihoyo: '米游社同步',
+  custom: '自定义接口',
+};
+
+const SOURCE_DESCS = {
+  local: '零配置、零风险：填一次当前树脂，之后离线也能按每 8 分钟 1 点准确推算。',
+  mihoyo: '扫码登录米游社后自动读取「实时便笺」，还能看到每日委托、探索派遣、周本折扣。',
+  custom: '对接你自己的代理接口，适合已有云函数或开源实时便笺服务的场景。',
+};
+
+const THEMES = ['gold', 'frost', 'jade', 'sakura', 'violet', 'graphite'];
+const THEME_DESCS = {
+  gold: '金曜 · 枫丹晚霞般的暖金',
+  frost: '晨霜 · 冷调冰蓝，长时间看不刺眼',
+  jade: '翠玉 · 风元素的青绿',
+  sakura: '樱花 · 淡粉，柔和一点',
+  violet: '暮紫 · 雷元素的紫',
+  graphite: '石墨 · 低调银灰，压得住深色壁纸',
+};
+
+let state = { config: null, note: null, status: { kind: 'idle', text: '' } };
+let draftSource = 'local';
+let toastTimer = null;
+let scaleTimer = null;
+
+/* ---------- 预览模式下的模拟桥 ---------- */
+function buildLocalNote(resin, nextInSeconds, max) {
+  const current = Math.max(0, Math.min(2000, Math.round(Number(resin) || 0)));
+  const cap = Number(max) || 200;
+  const points = Math.max(0, cap - current);
+  let remaining = points * RESIN_SECONDS;
+  if (points > 0 && nextInSeconds > 0 && nextInSeconds < RESIN_SECONDS) {
+    remaining = (points - 1) * RESIN_SECONDS + Math.round(nextInSeconds);
+  }
+  return {
+    currentResin: current,
+    maxResin: cap,
+    remainingSeconds: remaining,
+    syncedAt: Date.now(),
+    source: 'local',
+    extra: null,
+  };
+}
+
+/** 预览用的示意二维码（不可真实扫描） */
+function fakeQrDataUrl() {
+  const N = 25, cell = 5, padPx = 6, size = N * cell + padPx * 2;
+  let seed = 20261111;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const finder = (x, y) => (x < 7 && y < 7) || (x >= N - 7 && y < 7) || (x < 7 && y >= N - 7);
+  let rects = '';
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      let on;
+      if (finder(x, y)) {
+        const lx = x >= N - 7 ? x - (N - 7) : x;
+        const ly = y >= N - 7 ? y - (N - 7) : y;
+        on = lx === 0 || lx === 6 || ly === 0 || ly === 6 || (lx >= 2 && lx <= 4 && ly >= 2 && ly <= 4);
+      } else {
+        on = rnd() > 0.55;
+      }
+      if (on) rects += `<rect x="${padPx + x * cell}" y="${padPx + y * cell}" width="${cell}" height="${cell}"/>`;
+    }
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#fff"/><g fill="#1b202b">${rects}</g></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+// 纯浏览器打开 index.html 时用的演示数据，与任何真实账号无关
+const PREVIEW_ACCOUNTS = [
+  {
+    id: 'preview-main', uid: '100000001', server: 'cn_gf01', nickname: '示例旅行者',
+    label: '示例旅行者 · 100000001', loginMethod: 'qr', hasCookie: true, hasCredential: true,
+    lastSyncAt: Date.now(), resin: 148, maxResin: 200, error: '',
+    note: buildLocalNote(148, 137, 200),
+  },
+  {
+    id: 'preview-alt', uid: '100000002', server: 'cn_gf01', nickname: '旅行者',
+    label: '旅行者 · 100000002', loginMethod: 'qr', hasCookie: true, hasCredential: true,
+    lastSyncAt: Date.now() - 3600 * 1000, resin: 62, maxResin: 200, error: '',
+    note: buildLocalNote(62, 302, 200),
+  },
+  {
+    id: 'preview-third', uid: '100000003', server: 'cn_gf01', nickname: '小号',
+    label: '小号 · 100000003', loginMethod: 'qr', hasCookie: true, hasCredential: true,
+    lastSyncAt: Date.now() - 7200 * 1000, resin: 191, maxResin: 200, error: '',
+    note: buildLocalNote(191, 420, 200),
+  },
+];
+
+function makePreviewBridge() {
+  const KEY = 'genshin-resin-widget-preview';
+  const listeners = {};
+  let cfg;
+  try {
+    cfg = JSON.parse(localStorage.getItem(KEY)) || {};
+  } catch (_) {
+    cfg = {};
+  }
+  cfg = {
+    source: 'local', maxResin: 200, notifyAt: 190, syncInterval: 300,
+    server: 'cn_gf01', uid: '', customUrl: '', alwaysOnTop: true,
+    deskPin: false, theme: 'gold',
+    autoStart: false, hasCookie: false, hasCredential: false,
+    loginMethod: '', accountLabel: '', uiScale: 1,
+    activeAccountId: PREVIEW_ACCOUNTS[0].id,
+    accounts: PREVIEW_ACCOUNTS.map((a) => ({ ...a })),
+    ...cfg,
+  };
+  if (!Array.isArray(cfg.accounts) || !cfg.accounts.length) {
+    cfg.accounts = PREVIEW_ACCOUNTS.map((a) => ({ ...a }));
+    cfg.activeAccountId = cfg.accounts[0].id;
+  }
+  // 预览数据每次打开都重新计时，避免隔天看到「已回满」的假象
+  cfg.accounts.forEach((acc) => {
+    if (acc.resin == null) return;
+    if (!acc.note || Date.now() - Number(acc.note.syncedAt || 0) > 300000) {
+      acc.note = buildLocalNote(acc.resin, 137, acc.maxResin || 200);
+    }
+  });
+  let note = buildLocalNote(148, 137, cfg.maxResin);
+  const fire = (name, payload) => { if (listeners[name]) listeners[name](payload); };
+  const persistPreview = () => {
+    try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (_) { /* file:// 下可能禁用 */ }
+  };
+  const activeOf = () => cfg.accounts.find((a) => a.id === cfg.activeAccountId) || null;
+  const slim = () => {
+    const active = activeOf();
+    return {
+      ...cfg,
+      hasCookie: Boolean(active && active.hasCookie),
+      hasCredential: Boolean(active && active.hasCredential),
+      accountLabel: active ? active.label : '',
+      loginMethod: active ? active.loginMethod : '',
+      uid: active ? active.uid : cfg.uid,
+    };
+  };
+  return {
+    getState: async () => ({
+      config: slim(),
+      note,
+      status: { kind: 'ok', text: '预览 · 模拟数据' },
+    }),
+    saveConfig: async (patch) => {
+      cfg = { ...cfg, ...patch };
+      persistPreview();
+      return slim();
+    },
+    syncNow: async () => ({ ok: true }),
+    calibrate: async (payload) => {
+      const next = buildLocalNote(payload.resin, payload.nextInSeconds, cfg.maxResin);
+      const target = payload.accountId
+        ? cfg.accounts.find((a) => a.id === payload.accountId)
+        : null;
+      if (target) {
+        target.note = next;
+        target.resin = next.currentResin;
+        target.lastSyncAt = Date.now();
+        target.error = '';
+        persistPreview();
+        fire('config', slim());
+      } else {
+        note = next;
+        fire('note', note);
+      }
+      return { note: next, config: slim() };
+    },
+    fetchRoles: async () => ({
+      ok: true,
+      roles: [{ uid: '100000001', server: 'cn_gf01', nickname: '旅行者（预览）', level: 60 }],
+    }),
+    qrStart: async () => {
+      setTimeout(() => fire('qr', {
+        phase: 'created',
+        text: '预览模式 · 请用米游社 App 扫一扫',
+        qrDataUrl: fakeQrDataUrl(),
+        mode: 'preview',
+      }), 350);
+      return { ok: true, mode: 'preview' };
+    },
+    qrCancel: async () => ({ ok: true }),
+    verifyStart: async () => ({ ok: false, message: '这是界面预览，运行桌面版后才能完成米游社验证' }),
+    logout: async () => {
+      const id = cfg.activeAccountId;
+      cfg.accounts = cfg.accounts.filter((a) => a.id !== id);
+      if (!cfg.accounts.length) {
+        cfg.activeAccountId = '';
+        cfg.source = 'local';
+      } else {
+        cfg.activeAccountId = cfg.accounts[0].id;
+      }
+      persistPreview();
+      fire('config', slim());
+      return slim();
+    },
+    switchAccount: async (id) => {
+      const acc = cfg.accounts.find((a) => a.id === id);
+      if (!acc) return slim();
+      cfg.activeAccountId = id;
+      cfg.source = 'mihoyo';
+      note = buildLocalNote(acc.resin ?? 0, 137, acc.maxResin || cfg.maxResin);
+      persistPreview();
+      fire('note', note);
+      fire('config', slim());
+      return slim();
+    },    removeAccount: async (id) => {
+      cfg.accounts = cfg.accounts.filter((a) => a.id !== id);
+      if (cfg.activeAccountId === id) {
+        cfg.activeAccountId = cfg.accounts.length ? cfg.accounts[0].id : '';
+        if (!cfg.accounts.length) cfg.source = 'local';
+      }
+      persistPreview();
+      fire('config', slim());
+      return slim();
+    },
+    updateAccount: async (id, patch) => {
+      const acc = cfg.accounts.find((a) => a.id === id);
+      if (acc) Object.assign(acc, patch);
+      persistPreview();
+      fire('config', slim());
+      return slim();
+    },
+    setScale: async (value) => {
+      const n = Math.max(0.7, Math.min(1.8, Number(value) || 1));
+      cfg.uiScale = Math.round(n * 100) / 100;
+      persistPreview();
+      fire('config', slim());
+      return { ok: true, uiScale: cfg.uiScale };
+    },
+    fitHeight: (height) => {
+      const h = Math.max(200, Math.round(Number(height) || BASE_HEIGHT));
+      document.documentElement.style.setProperty('--preview-height', `${h}px`);
+    },
+    setView: () => {},
+    setSurface: () => {},
+    dragStart: () => {},
+    dragMove: () => {},
+    dragEnd: () => {},
+    windowAction: (action) => {
+      if (action === 'toggle-pin') {
+        cfg.deskPin = !cfg.deskPin;
+        if (cfg.deskPin) cfg.alwaysOnTop = false;
+        persistPreview();
+        fire('config', slim());
+        toast(cfg.deskPin ? '预览 · 已固定在桌面（桌面版会真正贴到壁纸层）' : '预览 · 已取消桌面固定');
+        return;
+      }
+      if (action === 'toggle-top') {
+        cfg.alwaysOnTop = !cfg.alwaysOnTop;
+        if (cfg.alwaysOnTop) cfg.deskPin = false;
+        persistPreview();
+        fire('config', slim());
+        toast(cfg.alwaysOnTop ? '预览 · 已置顶' : '预览 · 已取消置顶');
+        return;
+      }
+      toast('这是界面预览，运行桌面版后按钮才会生效');
+    },
+    onNote: (cb) => { listeners.note = cb; },
+    onStatus: () => {},
+    onSettings: () => {},
+    onConfig: (cb) => { listeners.config = cb; },
+    onQrUpdate: (cb) => { listeners.qr = cb; },
+    onQrRequest: () => {},
+    onAccountsRequest: (cb) => { listeners.accounts = cb; },
+    onToast: () => {},
+  };
+}
+
+const bridge = hostBridge || makePreviewBridge();
+
+/* ---------- 时间计算 ---------- */
+function compute(note, now) {
+  if (!note) return null;
+  const elapsed = Math.max(0, (now - note.syncedAt) / 1000);
+  const remaining = Math.max(0, note.remainingSeconds - elapsed);
+  const max = Number(note.maxResin) || 200;
+  const current = remaining <= 0
+    ? Math.max(max, Number(note.currentResin) || 0)
+    : Math.max(0, max - Math.ceil(remaining / RESIN_SECONDS));
+  const nextIn = remaining <= 0 ? 0 : (Math.ceil(remaining) % RESIN_SECONDS || RESIN_SECONDS);
+  return {
+    current, max, remaining, nextIn,
+    fullAt: new Date(now + remaining * 1000),
+  };
+}
+
+function formatHMS(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+}
+
+function formatMS(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
+  if (s >= 3600) return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+  return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+}
+
+function formatClock(date) {
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 86400000);
+  const hm = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  if (date.toDateString() === now.toDateString()) return `今天 ${hm}`;
+  if (date.toDateString() === tomorrow.toDateString()) return `明天 ${hm}`;
+  return `${date.getMonth() + 1}/${date.getDate()} ${hm}`;
+}
+
+function parseNext(text) {
+  const value = String(text || '').trim();
+  if (!value) return 0;
+  if (value.includes(':')) {
+    const parts = value.split(':').map((n) => Number(n));
+    if (parts.length === 2 && parts.every(Number.isFinite)) return parts[0] * 60 + parts[1];
+    if (parts.length === 3 && parts.every(Number.isFinite)) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return 0;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/* ---------- 渲染 ---------- */
+let multiRefs = [];
+let multiSignature = '';
+
+function initialOf(acc) {
+  const text = String(acc?.nickname || acc?.label || acc?.uid || '?').trim();
+  return text.slice(0, 1) || '?';
+}
+
+function syncAgoText(acc) {
+  if (!acc) return '';
+  if (acc.error) return '同步异常';
+  const at = Number(acc.lastSyncAt) || 0;
+  if (!at) return '未同步';
+  const diff = Math.max(0, Date.now() - at) / 1000;
+  if (diff < 60) return '刚刚同步';
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  return `${Math.floor(diff / 86400)} 天前`;
+}
+
+/** 多账号：每张卡片一套独立引用，每秒只更新数值，避免整块重建 */
+function buildMultiList(accounts) {
+  const host = $('multiList');
+  if (!host) return;
+  host.textContent = '';
+  multiRefs = accounts.map((acc) => {
+    const card = document.createElement('article');
+    card.className = 'ac-card';
+    card.dataset.id = acc.id;
+    card.innerHTML = [
+      '<div class="ac-head">',
+      '  <span class="ac-avatar"></span>',
+      '  <span class="ac-id"><span class="ac-name"></span><span class="ac-uid"></span></span>',
+      '  <button class="ac-calib" type="button" title="手动校准这个账号">✎</button>',
+      '  <span class="ac-resin"><b>--</b><small>/200</small></span>',
+      '</div>',
+      '<div class="ac-bar"><i></i></div>',
+      '<div class="ac-meta">',
+      '  <span class="ac-full">回满 <b>--:--:--</b></span>',
+      '  <span class="ac-next">下一枚 <b>--:--</b></span>',
+      '  <span class="ac-extra" hidden></span>',
+      '  <span class="ac-err" hidden></span>',
+      '</div>',
+    ].join('');
+    const pick = (sel) => card.querySelector(sel);
+    const calibBtn = pick('.ac-calib');
+    calibBtn.onclick = (event) => {
+      event.stopPropagation();
+      openCalib(acc.id);
+    };
+    const refs = {
+      id: acc.id,
+      card,
+      avatar: pick('.ac-avatar'),
+      name: pick('.ac-name'),
+      uid: pick('.ac-uid'),
+      resin: pick('.ac-resin b'),
+      max: pick('.ac-resin small'),
+      bar: pick('.ac-bar i'),
+      full: pick('.ac-full b'),
+      next: pick('.ac-next b'),
+      extra: pick('.ac-extra'),
+      err: pick('.ac-err'),
+    };
+    refs.avatar.textContent = initialOf(acc);
+    refs.name.textContent = acc.nickname || acc.label || '米游社账号';
+    refs.uid.textContent = acc.uid ? `UID ${acc.uid}` : '未读取到 UID';
+    refs.max.textContent = `/${acc.maxResin || DEFAULT_MAX}`;
+    host.appendChild(card);
+    return refs;
+  });
+}
+
+function updateMultiList(accounts, notifyAt, now) {
+  multiRefs.forEach((refs) => {
+    const acc = accounts.find((a) => a.id === refs.id);
+    if (!acc) return;
+    const c = compute(acc.note, now);
+    if (!c) {
+      refs.resin.textContent = '--';
+      refs.full.textContent = '--:--:--';
+      refs.next.textContent = '--:--';
+      refs.bar.style.width = '0%';
+      refs.card.classList.remove('is-overflow');
+    } else {
+      refs.resin.textContent = String(c.current);
+      refs.max.textContent = `/${c.max}`;
+      refs.full.textContent = c.remaining > 0 ? formatHMS(c.remaining) : '已回满';
+      refs.next.textContent = c.remaining > 0 ? formatMS(c.nextIn) : '—';
+      refs.bar.style.width = `${Math.min(100, Math.round((c.current / c.max) * 100))}%`;
+      refs.card.classList.toggle('is-overflow', c.current >= notifyAt);
+    }
+    const extra = acc.note?.extra;
+    if (extra) {
+      refs.extra.hidden = false;
+      refs.extra.textContent = `委托 ${extra.task} · 派遣 ${extra.expedition} · 周本 ${extra.discount}`;
+    } else {
+      refs.extra.hidden = true;
+    }
+    refs.err.hidden = !acc.error;
+    if (acc.error) refs.err.textContent = /1034/.test(acc.error) ? '待 App 处理' : '同步异常';
+  });
+}
+
+/** 内容高度变化后通知主进程调整窗口，保证多账号不会被裁掉 */
+let lastReportedHeight = 0;
+function reportHeight() {
+  const body = $('mainBody');
+  const view = $('viewMain');
+  if (!body || !view) return;
+  const padBottom = parseFloat(getComputedStyle(view).paddingBottom) || 0;
+  const target = view.hidden
+    ? BASE_HEIGHT
+    : Math.ceil(38 + body.offsetTop + body.offsetHeight + padBottom);
+  if (Math.abs(target - lastReportedHeight) < 1) return;
+  lastReportedHeight = target;
+  if (bridge.fitHeight) bridge.fitHeight(target);
+}
+
+/* ---------- 配色方案 ---------- */
+let currentTheme = '';
+function applyTheme(name) {
+  const theme = THEMES.includes(name) ? name : 'gold';
+  if (theme === currentTheme) return;
+  currentTheme = theme;
+  document.documentElement.dataset.theme = theme;
+  document.querySelectorAll('.theme-dot').forEach((dot) => {
+    dot.classList.toggle('active', dot.dataset.theme === theme);
+  });
+  const desc = $('themeDesc');
+  if (desc) desc.textContent = THEME_DESCS[theme] || '';
+}
+
+/** 窗口层级只在桌面/置顶两种状态间切换，界面上的勾选要跟着变 */
+function syncLayerUI(cfg) {
+  const pinned = Boolean(cfg.deskPin);
+  const top = Boolean(cfg.alwaysOnTop) && !pinned;
+  const pinBtn = $('btnPin');
+  if (pinBtn) {
+    pinBtn.classList.toggle('on', pinned);
+    pinBtn.title = pinned ? '已固定在桌面（点击取消）' : '固定在桌面';
+  }
+  const pinInput = $('inDeskPin');
+  if (pinInput && pinInput.checked !== pinned) pinInput.checked = pinned;
+  const topInput = $('inTop');
+  if (topInput && topInput.checked !== top) topInput.checked = top;
+}
+
+function render() {
+  const cfg = state.config || {};
+  const status = state.status || { kind: 'idle', text: '' };
+  const accounts = Array.isArray(cfg.accounts) ? cfg.accounts : [];
+  const active = accounts.find((a) => a.id === cfg.activeAccountId) || null;
+  const source = cfg.source || 'local';
+  const multi = source === 'mihoyo' && accounts.length > 1;
+  const now = Date.now();
+  const notifyAt = Number(cfg.notifyAt) || 190;
+
+  applyTheme(cfg.theme);
+  syncLayerUI(cfg);
+
+  $('statusText').textContent = status.text || SOURCE_LABELS[source] || '—';
+  $('statusDot').style.background = STATUS_COLORS[status.kind] || STATUS_COLORS.idle;
+  $('statusDot').style.color = STATUS_COLORS[status.kind] || STATUS_COLORS.idle;
+
+  const needVerify = Boolean(status.needVerify) || /1034/.test(status.text || '');
+  const hasRisk = status.kind === 'error'
+    && (needVerify || /5003|1034|风控|指纹|验证/.test(status.text || ''));
+  const riskMessage = status.text || '米游社接口返回异常，请稍后重试';
+  $('riskTip').hidden = !hasRisk;
+  $('riskBar').hidden = !hasRisk;
+  $('riskText').textContent = needVerify
+    ? `⚠ ${riskMessage}。滑块验证目前多半会被服务端直接拒绝，建议先在 App 内打开一次实时便笺，再点「重新检测」。`
+    : `⚠ ${riskMessage}`;
+  $('riskBarText').textContent = needVerify ? '请先在米游社 App 打开一次实时便笺' : riskMessage;
+  // 标题栏空间有限，风控时用短标签，完整说明留给提示条
+  if (hasRisk) $('statusText').textContent = needVerify ? '风控中' : '同步异常';
+
+  $('sourceTag').textContent = isPreview
+    ? '界面预览'
+    : (multi ? `${SOURCE_LABELS[source]} · ${accounts.length} 账号` : SOURCE_LABELS[source]);
+
+  $('soloCard').hidden = multi;
+  $('multiList').hidden = !multi;
+  $('extraRow').hidden = multi;
+  $('btnAddAccountMain').hidden = source !== 'mihoyo';
+  // 手动校准是风控期间唯一稳的兜底，所有数据来源都随时可用
+  $('btnCalibrate').hidden = false;
+  // 钉在桌面时窗口是桌面子窗口，系统标题栏拖动会失效，切到手动拖动
+  document.documentElement.dataset.pinned = cfg.deskPin ? '1' : '0';
+
+  if (multi) {
+    const signature = accounts.map((a) => a.id).join(',');
+    if (signature !== multiSignature) {
+      multiSignature = signature;
+      buildMultiList(accounts);
+    }
+    updateMultiList(accounts, notifyAt, now);
+  } else if (multiSignature) {
+    multiSignature = '';
+    multiRefs = [];
+    $('multiList').textContent = '';
+  }
+
+  // 单账号用当前快照；多账号时每张卡片各用自己的快照
+  const note = (source === 'mihoyo' && active) ? active.note : state.note;
+  const c = compute(note, now);
+
+  if (!multi) {
+    const showHead = source === 'mihoyo' && Boolean(active);
+    $('soloHead').hidden = !showHead;
+    if (showHead) {
+      $('soloAvatar').textContent = initialOf(active);
+      $('soloName').textContent = active.nickname || active.label || '米游社账号';
+      $('soloUid').textContent = active.uid ? `UID ${active.uid}` : '未读取到 UID';
+      $('soloSync').textContent = syncAgoText(active);
+    }
+  }
+
+  // 溢出提醒：多账号时按账号数量统计
+  const notesToCheck = (source === 'mihoyo' && accounts.length)
+    ? accounts.map((a) => a.note)
+    : [state.note];
+  const overflowCount = notesToCheck.reduce((sum, item) => {
+    const itemCalc = item ? compute(item, now) : null;
+    return sum + (itemCalc && itemCalc.current >= notifyAt ? 1 : 0);
+  }, 0);
+  $('widget').classList.toggle('is-overflow', overflowCount > 0);
+  $('overflowAlert').hidden = overflowCount === 0;
+  if (overflowCount) {
+    $('overflowAlert').textContent = multi
+      ? `⚠ ${overflowCount} 个账号树脂即将溢出，记得上线消耗`
+      : '⚠ 树脂即将溢出，记得上线消耗';
+  }
+
+  if (!c) {
+    if (!multi) {
+      $('resinValue').textContent = '--';
+      $('resinMax').textContent = cfg.maxResin || DEFAULT_MAX;
+      $('fullCountdown').textContent = '--:--:--';
+      $('fullClock').textContent = '请先校准';
+      $('nextCountdown').textContent = '--:--';
+      $('ringFg').style.strokeDashoffset = RING_CIRCUMFERENCE;
+      $('extraRow').classList.add('dim');
+      $('localHint').hidden = false;
+    }
+    reportHeight();
+    return;
+  }
+
+  if (!multi) {
+    $('resinValue').textContent = c.current;
+    $('resinMax').textContent = c.max;
+    $('fullCountdown').textContent = c.remaining > 0 ? formatHMS(c.remaining) : '已回满';
+    $('fullClock').textContent = c.remaining > 0 ? formatClock(c.fullAt) : '—';
+    $('nextCountdown').textContent = c.remaining > 0 ? formatMS(c.nextIn) : '—';
+
+    const ratio = Math.min(1, c.current / c.max);
+    $('ringFg').style.strokeDashoffset = (RING_CIRCUMFERENCE * (1 - ratio)).toFixed(2);
+
+    const hasExtra = Boolean(note.extra);
+    $('extraRow').classList.toggle('dim', !hasExtra);
+    $('taskValue').textContent = hasExtra ? note.extra.task : '--';
+    $('expeditionValue').textContent = hasExtra ? note.extra.expedition : '--';
+    $('discountValue').textContent = hasExtra ? note.extra.discount : '--';
+
+    $('localHint').hidden = source !== 'local' && hasExtra;
+  } else {
+    $('extraRow').classList.remove('dim');
+    $('localHint').hidden = true;
+  }
+
+  reportHeight();
+}
+
+/* ---------- 多账号 ---------- */
+function renderAccountList(container, accounts) {
+  if (!container) return;
+  container.textContent = '';
+  if (!accounts.length) {
+    const empty = document.createElement('div');
+    empty.className = 'acct-empty';
+    empty.textContent = '还没有账号。点下方按钮扫码登录，可同时保存多个米游社账号一起显示。';
+    container.appendChild(empty);
+    return;
+  }
+  accounts.forEach((acc) => {
+    const row = document.createElement('div');
+    row.className = 'acct-row';
+    row.dataset.accountId = acc.id;
+
+    const avatar = document.createElement('span');
+    avatar.className = 'acct-avatar';
+    const initial = String(acc.nickname || acc.label || acc.uid || '?').trim().slice(0, 1);
+    avatar.textContent = initial || '?';
+
+    const info = document.createElement('span');
+    info.className = 'acct-info';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'acct-name';
+    nameEl.textContent = acc.label || acc.nickname || (acc.uid ? `账号 ${acc.uid}` : '米游社账号');
+    const metaEl = document.createElement('span');
+    metaEl.className = 'acct-meta';
+    metaEl.textContent = acc.uid ? `UID ${acc.uid}` : '未读取到 UID';
+    info.append(nameEl, metaEl);
+
+    const resinEl = document.createElement('span');
+    resinEl.className = 'acct-resin';
+    resinEl.textContent = acc.resin != null ? `${acc.resin}/${acc.maxResin || 200}` : '--';
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'acct-del';
+    del.title = '移除该账号';
+    del.textContent = '×';
+    del.onclick = (event) => { event.stopPropagation(); removeAccount(acc.id); };
+
+    row.append(avatar, info, resinEl, del);
+    container.appendChild(row);
+  });
+}
+
+function renderAccountUI() {
+  const cfg = state.config || {};
+  const accounts = Array.isArray(cfg.accounts) ? cfg.accounts : [];
+
+  const badge = $('accountCount');
+  badge.hidden = accounts.length === 0;
+  badge.textContent = String(accounts.length);
+
+  $('accountSection').hidden = accounts.length === 0;
+  $('accountTotal').textContent = accounts.length ? `${accounts.length} 个` : '';
+  renderAccountList($('accountListSettings'), accounts);
+  renderAccountList($('accountListSheet'), accounts);
+
+  $('btnQrLogin').textContent = accounts.length ? '＋ 添加账号（扫码登录）' : '扫码登录米游社';
+  $('btnLogout').hidden = true;
+  updateAccountCard();
+}
+
+function showAccountsSheet() {
+  renderAccountUI();
+  $('accountsSheet').hidden = false;
+  refreshSurface();
+}
+
+function hideAccountsSheet() {
+  $('accountsSheet').hidden = true;
+  refreshSurface();
+}
+
+/* ---------- 手动校准浮层 ---------- */
+let calibAccountId = '';
+
+/** 校准返回值兼容两种形状：{note, config} 或直接给 note */
+function applyCalibrateResult(result) {
+  if (!result) return null;
+  const packed = result.note || result.config;
+  const note = packed ? (result.note || null) : result;
+  const config = result.config || null;
+  if (config) state.config = { ...state.config, ...config };
+  if (note) state.note = note;
+  return note;
+}
+
+/** 界面是否有一层「需要键盘输入」的面板打开：决定窗口要不要浮到前台 */
+let lastSurface = null;
+function refreshSurface() {
+  const interactive = !$('viewSettings')?.hidden
+    || !$('accountsSheet')?.hidden
+    || !$('qrOverlay')?.hidden
+    || !$('calibSheet')?.hidden;
+  document.documentElement.dataset.interactive = interactive ? '1' : '0';
+  if (interactive === lastSurface) return;
+  lastSurface = interactive;
+  if (bridge.setSurface) bridge.setSurface(interactive);
+}
+
+function calibAccounts() {
+  const cfg = state.config || {};
+  return cfg.source === 'mihoyo' ? (cfg.accounts || []) : [];
+}
+
+function calibAccount() {
+  return calibAccounts().find((a) => a.id === calibAccountId) || null;
+}
+
+function renderCalibAccounts() {
+  const host = $('calibAccounts');
+  const accounts = calibAccounts();
+  host.textContent = '';
+  host.hidden = accounts.length <= 1;
+  if (accounts.length <= 1) return;
+  accounts.forEach((acc) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'calib-account';
+    btn.dataset.id = acc.id;
+    btn.textContent = acc.label || acc.nickname || acc.uid || '账号';
+    btn.classList.toggle('active', acc.id === calibAccountId);
+    btn.onclick = () => {
+      calibAccountId = acc.id;
+      renderCalibAccounts();
+      fillCalibValues();
+      $('inCalibResin').focus();
+      $('inCalibResin').select();
+    };
+    host.appendChild(btn);
+  });
+}
+
+function renderCalibChips() {
+  const host = $('calibChips');
+  const cfg = state.config || {};
+  const acc = calibAccount();
+  const max = Number(acc?.maxResin) || Number(cfg.maxResin) || DEFAULT_MAX;
+  host.textContent = '';
+  [0, 20, 40, 80, 120, 160, max].forEach((value, index, list) => {
+    if (list.indexOf(value) !== index) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'calib-chip';
+    btn.textContent = value === max ? `满 ${max}` : String(value);
+    btn.onclick = () => {
+      $('inCalibResin').value = String(value);
+      $('inCalibNext').value = value >= max ? '' : $('inCalibNext').value;
+      $('inCalibResin').focus();
+    };
+    host.appendChild(btn);
+  });
+}
+
+function fillCalibValues() {
+  const cfg = state.config || {};
+  const acc = calibAccount();
+  $('calibTitle').textContent = acc
+    ? `校准 · ${acc.label || acc.nickname || acc.uid || '米游社账号'}`
+    : '手动校准';
+  $('calibDesc').textContent = acc
+    ? '按游戏内该账号的实际树脂填写。保存后先按本地推算，下次同步成功会以米游社数据为准。'
+    : '按游戏内实际数值填写即可。保存后按每 8 分钟 1 点自动推算，关机重开也会接着算。';
+  const note = acc ? acc.note : state.note;
+  const c = compute(note, Date.now());
+  $('inCalibResin').value = c ? String(c.current) : '';
+  $('inCalibNext').value = '';
+}
+
+function openCalib(accountId) {
+  const cfg = state.config || {};
+  const accounts = calibAccounts();
+  if (accounts.length) {
+    const wanted = accounts.find((a) => a.id === accountId);
+    const fallback = accounts.find((a) => a.id === cfg.activeAccountId) || accounts[0];
+    calibAccountId = (wanted || fallback).id;
+  } else {
+    calibAccountId = '';
+  }
+  renderCalibAccounts();
+  renderCalibChips();
+  fillCalibValues();
+  $('calibSheet').hidden = false;
+  refreshSurface();
+  requestAnimationFrame(() => {
+    const input = $('inCalibResin');
+    input.focus();
+    input.select();
+  });
+}
+
+function closeCalib() {
+  $('calibSheet').hidden = true;
+  refreshSurface();
+  render();
+}
+
+async function saveCalib() {
+  const raw = String($('inCalibResin').value || '').trim();
+  const resin = Number(raw);
+  if (!raw || !Number.isFinite(resin) || resin < 0) {
+    toast('请填写当前树脂数量');
+    $('inCalibResin').focus();
+    return;
+  }
+  const acc = calibAccount();
+  const result = await bridge.calibrate({
+    resin,
+    nextInSeconds: parseNext($('inCalibNext').value),
+    accountId: acc ? acc.id : '',
+  });
+  applyCalibrateResult(result);
+  $('calibSheet').hidden = true;
+  refreshSurface();
+  renderAccountUI();
+  render();
+  toast(acc
+    ? `已校准「${acc.label || acc.nickname || acc.uid}」，之后按 8 分钟 1 点推算`
+    : '已校准，之后会自动按 8 分钟 1 点增长');
+}
+
+function applyPreviewScale() {
+  if (!isPreview) return;
+  const scale = Number(state.config?.uiScale) || 1;
+  document.documentElement.style.setProperty('--preview-scale', String(scale));
+}
+
+async function removeAccount(id) {
+  const accounts = state.config?.accounts || [];
+  const target = accounts.find((a) => a.id === id);
+  if (!target) return;
+  if (!isPreview) {
+    const name = target.label || target.nickname || target.uid || '该账号';
+    const confirmed = window.confirm(`移除「${name}」？\n本机保存的登录凭证会一并清除，其他账号不受影响。`);
+    if (!confirmed) return;
+  }
+  const cfg = await bridge.removeAccount(id);
+  if (!cfg) return;
+  state.config = { ...state.config, ...cfg };
+  state.note = cfg.note ?? null;
+  const remain = (cfg.accounts || []).length;
+  state.status = { kind: remain ? 'ok' : 'idle', text: remain ? '已切换账号' : '未登录' };
+  render();
+  renderAccountUI();
+  toast(remain ? '已移除账号' : '已移除账号，可在设置里重新扫码登录');
+}
+
+/* ---------- 界面缩放 ---------- */
+function updateScaleUI() {
+  const scale = Number(state.config?.uiScale) || 1;
+  const pct = Math.max(70, Math.min(180, Math.round(scale * 100)));
+  const range = $('inScale');
+  if (range) {
+    range.value = String(pct);
+    range.style.setProperty('--pct', `${((pct - 70) / (180 - 70)) * 100}%`);
+  }
+  const reset = $('btnScaleReset');
+  if (reset) reset.textContent = `${pct}%`;
+  applyPreviewScale();
+}
+
+async function setScale(pct) {
+  const value = Math.max(0.7, Math.min(1.8, (Number(pct) || 100) / 100));
+  state.config = { ...state.config, uiScale: value };
+  updateScaleUI();
+  const result = await bridge.setScale(value);
+  if (result && result.uiScale) {
+    state.config.uiScale = result.uiScale;
+    updateScaleUI();
+  }
+}
+
+/* ---------- 设置面板 ---------- */
+function showView(name) {
+  $('viewMain').hidden = name !== 'main';
+  $('viewSettings').hidden = name !== 'settings';
+  if (name === 'settings') updateSourcePanel();
+  refreshSurface();
+  lastReportedHeight = 0; // 视图切换后高度基准变化，强制重新上报
+  requestAnimationFrame(reportHeight);
+  if (bridge.setView) bridge.setView(name);
+}
+
+function updateSourcePanel() {
+  document.querySelectorAll('.seg').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.source === draftSource);
+  });
+  $('panelLocal').hidden = draftSource !== 'local';
+  $('panelMihoyo').hidden = draftSource !== 'mihoyo';
+  $('panelCustom').hidden = draftSource !== 'custom';
+  $('sourceDesc').textContent = SOURCE_DESCS[draftSource];
+}
+
+function updateAccountCard() {
+  const c = state.config || {};
+  const accounts = Array.isArray(c.accounts) ? c.accounts : [];
+  const logged = accounts.filter((a) => a.hasCookie);
+
+  $('accountLabel').textContent = logged.length
+    ? (logged.length === 1
+      ? (logged[0].label || logged[0].nickname || '已登录米游社')
+      : `已登录 ${logged.length} 个米游社账号`)
+    : '未登录';
+  $('accountSub').textContent = logged.length
+    ? '所有账号同时显示在主页，各自独立同步'
+    : '扫码登录后可自动同步';
+  $('btnLogout').hidden = true;
+  $('cookieState').textContent = logged.length ? '已保存' : '未填写';
+}
+
+function fillSettings() {
+  const c = state.config;
+  draftSource = c.source || 'local';
+  $('inServer').value = c.server || 'cn_gf01';
+  $('inUid').value = c.uid || '';
+  $('inCustomUrl').value = c.customUrl || '';
+  $('inMax').value = c.maxResin || 200;
+  $('inNotify').value = c.notifyAt || 190;
+  $('inInterval').value = c.syncInterval || 300;
+  $('inDeskPin').checked = Boolean(c.deskPin);
+  $('inTop').checked = Boolean(c.alwaysOnTop) && !c.deskPin;
+  $('inAutoStart').checked = Boolean(c.autoStart);
+  $('inCookie').value = '';
+  const current = compute(state.note, Date.now());
+  $('inResin').value = current ? current.current : '';
+  applyTheme(c.theme);
+  renderAccountUI();
+  updateScaleUI();
+  updateSourcePanel();
+}
+
+function collectConfig() {
+  const patch = {
+    source: draftSource,
+    maxResin: Math.max(1, Number($('inMax').value) || 200),
+    notifyAt: Math.max(1, Number($('inNotify').value) || 190),
+    syncInterval: Math.max(180, Number($('inInterval').value) || 300),
+    alwaysOnTop: $('inTop').checked,
+    deskPin: $('inDeskPin').checked,
+    theme: currentTheme || state.config?.theme || 'gold',
+    autoStart: $('inAutoStart').checked,
+    server: $('inServer').value,
+    uid: $('inUid').value.trim(),
+    customUrl: $('inCustomUrl').value.trim(),
+  };
+  const cookie = $('inCookie').value.trim();
+  if (cookie) patch.cookie = cookie;
+  return patch;
+}
+
+function toast(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3200);
+}
+
+/* ---------- 扫码登录弹层 ---------- */
+function showQr() {
+  $('qrOverlay').hidden = false;
+  $('qrStatusText').textContent = '正在生成二维码…';
+  $('qrMode').textContent = '';
+  $('qrCover').hidden = true;
+  $('qrImage').removeAttribute('src');
+  refreshSurface();
+}
+
+function hideQr() {
+  $('qrOverlay').hidden = true;
+  refreshSurface();
+}
+
+async function beginQrLogin() {
+  showQr();
+  const result = await bridge.qrStart();
+  if (result && result.ok === false) toast(result.message || '二维码生成失败');
+}
+
+function handleQrUpdate(payload) {
+  if (!payload) return;
+  if (payload.phase === 'idle') { hideQr(); return; }
+  $('qrOverlay').hidden = false;
+  refreshSurface();
+  if (payload.qrDataUrl) $('qrImage').src = payload.qrDataUrl;
+  if (payload.text) $('qrStatusText').textContent = payload.text;
+
+  switch (payload.phase) {
+    case 'loading':
+      $('qrCover').hidden = true;
+      break;
+    case 'created':
+      $('qrCover').hidden = true;
+      $('qrMode').textContent = payload.mode === 'web'
+        ? '兼容通道 · 不含 stoken，登录过期需重新扫码'
+        : payload.mode === 'preview'
+          ? '预览模式 · 此二维码不可扫描'
+          : 'App 通道 · 支持自动续期';
+      break;
+    case 'scanned':
+    case 'working':
+    case 'polling-error':
+      $('qrCover').hidden = true;
+      break;
+    case 'expired':
+    case 'error':
+      $('qrCover').hidden = false;
+      $('qrCover').textContent = '请刷新二维码';
+      break;
+    case 'done':
+      $('qrCover').hidden = true;
+      renderAccountUI();
+      setTimeout(() => {
+        hideQr();
+        toast(payload.text || '登录成功');
+      }, 1000);
+      break;
+    default:
+      break;
+  }
+}
+
+/* ---------- 钉在桌面时的窗口拖动 ---------- */
+/**
+ * 钉到桌面后主窗口是 Progman 的子窗口，-webkit-app-region: drag 不再生效
+ * （子窗口不走系统标题栏移动），所以改由渲染层发屏幕坐标、主进程 setBounds。
+ * 未钉住时仍然用系统拖动，手感更顺。
+ */
+function bindWindowDrag() {
+  const handle = $('dragHandle');
+  if (!handle || !bridge.dragStart) return;
+  let dragging = false;
+  let pointerId = null;
+
+  handle.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    if (document.documentElement.dataset.pinned !== '1') return;
+    if (event.target.closest('button')) return;
+    dragging = true;
+    pointerId = event.pointerId;
+    try { handle.setPointerCapture(pointerId); } catch (_) { /* ignore */ }
+    bridge.dragStart(event.screenX, event.screenY);
+    event.preventDefault();
+  });
+
+  handle.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    bridge.dragMove(event.screenX, event.screenY);
+  });
+
+  const stop = (event) => {
+    if (!dragging) return;
+    dragging = false;
+    if (pointerId !== null) {
+      try { handle.releasePointerCapture(pointerId); } catch (_) { /* ignore */ }
+    }
+    pointerId = null;
+    bridge.dragEnd();
+    if (event && event.type === 'pointerup') reportHeight();
+  };
+  handle.addEventListener('pointerup', stop);
+  handle.addEventListener('pointercancel', stop);
+}
+
+function bindUI() {
+  $('btnRefresh').onclick = async () => {
+    const result = await bridge.syncNow();
+    if (result && result.ok === false) toast(result.message || '同步失败');
+  };
+  $('btnSettings').onclick = () => {
+    showView($('viewSettings').hidden ? 'settings' : 'main');
+  };
+  $('btnBack').onclick = () => showView('main');
+  $('btnHide').onclick = () => bridge.windowAction('hide');
+  $('btnPin').onclick = () => bridge.windowAction('toggle-pin');
+
+  document.querySelectorAll('.theme-dot').forEach((dot) => {
+    dot.onclick = async () => {
+      const name = dot.dataset.theme;
+      applyTheme(name);
+      state.config = { ...state.config, theme: name };
+      const cfg = await bridge.saveConfig({ theme: name });
+      if (cfg) state.config = { ...state.config, ...cfg };
+      const label = (THEME_DESCS[name] || '').split(' · ')[0];
+      if (!isPreview) toast(`配色已切换：${label}`);
+    };
+  });
+
+  // 窗口层级改动立刻生效，不用等「保存并同步」
+  $('inDeskPin').onchange = async () => {
+    const next = $('inDeskPin').checked;
+    state.config = { ...state.config, deskPin: next, alwaysOnTop: next ? false : $('inTop').checked };
+    syncLayerUI(state.config);
+    const cfg = await bridge.saveConfig({ deskPin: next });
+    if (cfg) state.config = { ...state.config, ...cfg };
+    syncLayerUI(state.config);
+    render();
+  };
+  $('inTop').onchange = async () => {
+    const next = $('inTop').checked;
+    state.config = { ...state.config, alwaysOnTop: next, deskPin: next ? false : state.config.deskPin };
+    syncLayerUI(state.config);
+    const cfg = await bridge.saveConfig({ alwaysOnTop: next, deskPin: next ? false : state.config.deskPin });
+    if (cfg) state.config = { ...state.config, ...cfg };
+    syncLayerUI(state.config);
+    render();
+  };
+  $('btnCalibrate').onclick = () => openCalib('');
+  $('btnCalibClose').onclick = () => closeCalib();
+  $('btnCalibCancel').onclick = () => closeCalib();
+  $('btnCalibSave').onclick = () => saveCalib();
+  $('inCalibResin').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') saveCalib();
+    if (event.key === 'Escape') closeCalib();
+  });
+  $('inCalibNext').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') saveCalib();
+    if (event.key === 'Escape') closeCalib();
+  });
+
+  document.querySelectorAll('.seg').forEach((btn) => {
+    btn.onclick = () => { draftSource = btn.dataset.source; updateSourcePanel(); };
+  });
+
+  $('btnApplyCalibrate').onclick = async () => {
+    const resin = Number($('inResin').value);
+    if (!Number.isFinite(resin) || resin < 0) return toast('请填写当前树脂数量');
+    const result = await bridge.calibrate({ resin, nextInSeconds: parseNext($('inNext').value) });
+    applyCalibrateResult(result);
+    state.status = { kind: 'local', text: '本地推算' };
+    fillSettings();
+    showView('main');
+    render();
+    toast('已校准，之后会自动按 8 分钟 1 点增长');
+  };
+
+  $('btnFetchRoles').onclick = async () => {
+    const patch = { server: $('inServer').value, uid: $('inUid').value.trim() };
+    const cookie = $('inCookie').value.trim();
+    if (cookie) patch.cookie = cookie;
+    state.config = await bridge.saveConfig(patch);
+    updateAccountCard();
+    if (cookie) $('inCookie').value = '';
+    const result = await bridge.fetchRoles();
+    if (result.ok && result.roles && result.roles.length) {
+      const role = result.roles[0];
+      $('inUid').value = role.uid;
+      if (role.server) $('inServer').value = role.server;
+      if (state.config.activeAccountId) {
+        const updated = await bridge.updateAccount(state.config.activeAccountId, {
+          uid: role.uid,
+          server: role.server || $('inServer').value,
+        });
+        if (updated) state.config = { ...state.config, ...updated };
+      }
+      renderAccountUI();
+      toast(`找到 ${result.roles.length} 个角色，已填入 ${role.nickname || role.uid}`);
+    } else {
+      toast(result.message || '未找到角色，请检查 Cookie');
+    }
+  };
+
+  const startVerify = async () => {
+    const result = await bridge.verifyStart();
+    toast(result?.message || (result?.ok === false ? '验证未启动' : '已打开验证窗口'));
+  };
+  $('btnVerify').onclick = startVerify;
+  $('btnVerifySettings').onclick = startVerify;
+  $('btnRecheck').onclick = () => {
+    bridge.windowAction('refresh');
+    toast('正在重新检测…');
+  };
+
+  $('btnQrLogin').onclick = () => beginQrLogin();
+  $('btnQrClose').onclick = () => { hideQr(); bridge.qrCancel(); };
+  $('btnQrCancel').onclick = () => { hideQr(); bridge.qrCancel(); };
+  $('btnQrRefresh').onclick = () => beginQrLogin();
+
+  $('btnLogout').onclick = () => removeAccount(state.config?.activeAccountId);
+
+  $('btnAccounts').onclick = () => showAccountsSheet();
+  $('btnAddAccountMain').onclick = () => beginQrLogin();
+  $('btnAccountsClose').onclick = () => hideAccountsSheet();
+  $('accountsSheet').onclick = (event) => {
+    if (event.target === $('accountsSheet')) hideAccountsSheet();
+  };
+  $('btnAddAccount').onclick = () => { hideAccountsSheet(); beginQrLogin(); };
+
+  $('inScale').oninput = () => {
+    const pct = Number($('inScale').value) || 100;
+    state.config = { ...state.config, uiScale: pct / 100 };
+    updateScaleUI();
+    clearTimeout(scaleTimer);
+    scaleTimer = setTimeout(() => { setScale(pct); }, 90);
+  };
+  $('btnScaleReset').onclick = () => setScale(100);
+
+  window.addEventListener('wheel', (event) => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    const pct = Math.round((Number(state.config?.uiScale) || 1) * 20) * 5;
+    setScale(pct + (event.deltaY < 0 ? 5 : -5));
+  }, { passive: false });
+
+  $('btnSave').onclick = async () => {
+    const patch = collectConfig();
+    state.config = await bridge.saveConfig(patch);
+    // UID / 服务器属于账号，保存时同步写回当前账号
+    if (state.config.activeAccountId) {
+      const updated = await bridge.updateAccount(state.config.activeAccountId, {
+        uid: patch.uid,
+        server: patch.server,
+      });
+      if (updated) state.config = { ...state.config, ...updated };
+    }
+    renderAccountUI();
+    $('inCookie').value = '';
+    const result = await bridge.syncNow();
+    fillSettings();
+    showView('main');
+    render();
+    if (result && result.ok === false) toast(result.message || '同步失败，已保留上次数据');
+    else toast('设置已保存');
+  };
+}
+
+async function boot() {
+  const snapshot = await bridge.getState();
+  state.config = snapshot.config;
+  state.note = snapshot.note;
+  state.status = snapshot.status || { kind: 'idle', text: '' };
+
+  bridge.onNote((note) => { state.note = note; render(); });
+  bridge.onStatus((status) => { state.status = status; render(); });
+  bridge.onSettings(() => { fillSettings(); showView('settings'); });
+  bridge.onConfig((config) => {
+    state.config = { ...state.config, ...config };
+    if (!$('viewSettings').hidden) fillSettings();
+    renderAccountUI();
+    updateScaleUI();
+    render();
+  });
+  bridge.onQrUpdate(handleQrUpdate);
+  bridge.onQrRequest(() => beginQrLogin());
+  bridge.onAccountsRequest(() => showAccountsSheet());
+  bridge.onToast((message) => toast(message));
+
+  bindUI();
+  bindWindowDrag();
+  fillSettings();
+  renderAccountUI();
+  updateScaleUI();
+  if (!state.note && state.config.source === 'local' && !isPreview) showView('settings');
+  render();
+  requestAnimationFrame(reportHeight);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { lastReportedHeight = 0; reportHeight(); });
+  }
+  setInterval(render, 1000);
+}
+
+boot();
+
+</script>
+</body>
+</html>

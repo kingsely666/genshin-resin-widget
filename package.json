@@ -1,0 +1,98 @@
+{
+  "name": "genshin-resin-widget",
+  "version": "1.6.1",
+  "private": true,
+  "description": "桌面原粹树脂实时小组件，支持米游社扫码登录、设备指纹与人机验证",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node start.js",
+    "diagnose": "node start.js diagnose.js",
+    "diagnose:verify": "node start.js diagnose-verify.js",
+    "selftest": "node start.js selftest.js",
+    "selftest:app": "node start.js selftest-app.js",
+    "selftest:store": "node start.js selftest-store.js",
+    "selftest:verify": "node start.js selftest-verify.js",
+    "selftest:protocol": "node selftest-protocol.js",
+    "selftest:shot": "node start.js selftest-shot.js",
+    "preview": "node build-preview.js",
+    "check": "node --check src/main.js && node --check src/api.js && node --check src/qrlogin.js && node --check src/devicefp.js && node --check src/store.js && node --check src/preload.js && node --check src/verify-preload.js && node --check src/renderer.js && node --check start.js && node --check build-preview.js && node --check diagnose.js && node --check diagnose-verify.js && node --check selftest.js && node --check selftest-app.js && node --check selftest-shot.js && node --check selftest-deskpin.js && node --check selftest-verify.js && node --check selftest-store.js && node --check selftest-protocol.js && node --check selftest-verify-origin.js && node --check selftest-calib.js && node --check selftest-layer-e2e.js",
+    "selftest:deskpin": "node start.js selftest-deskpin.js",
+    "selftest:calib": "node start.js selftest-calib.js",
+    "selftest:layer": "node selftest-layer-e2e.js",
+    "selftest:verify-origin": "node start.js selftest-verify-origin.js",
+    "icon": "node start.js build-icon.js",
+    "dist": "electron-builder --win nsis",
+    "dist:dir": "electron-builder --dir",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
+  "author": {
+    "name": "kingsely666",
+    "email": "kingsely666@users.noreply.github.com"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "com.kingsely.resinwidget",
+    "productName": "原粹树脂",
+    "copyright": "Copyright © 2026 kingsely666",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "!**/*.map",
+      "!**/node_modules/**/.*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
+    "asar": true,
+    "compression": "maximum",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "executableName": "ResinWidget"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "原粹树脂",
+      "uninstallDisplayName": "原粹树脂",
+      "deleteAppDataOnUninstall": false,
+      "installerLanguages": [
+        "zh_CN"
+      ],
+      "artifactName": "ResinWidget-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "ResinWidget-Portable-${version}.${ext}"
+    }
+  }
+}

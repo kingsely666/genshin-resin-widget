@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>米游社人机验证</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    background: #f6f4ef; color: #2c313c;
+  }
+  h1 { font-size: 16px; margin: 0 0 6px; letter-spacing: .5px; }
+  p { font-size: 12px; line-height: 1.7; color: #6b7280; margin: 0 0 16px; }
+  #captcha { min-height: 44px; }
+  .status {
+    margin-top: 14px; font-size: 12px; color: #8a6d3b;
+    background: #fdf6e3; border: 1px solid #f0dfae;
+    border-radius: 8px; padding: 10px 12px; line-height: 1.6;
+  }
+  .status.error { color: #a3453e; background: #fbeceb; border-color: #eec9c5; }
+  .tip { margin-top: 14px; font-size: 11px; color: #9aa0aa; line-height: 1.7; }
+  .geetest_holder { max-width: 100%; }
+  .actions { margin-top: 12px; display: flex; gap: 8px; }
+  button {
+    font: inherit; font-size: 12px; padding: 7px 14px; border-radius: 8px;
+    border: 1px solid #cbb68a; background: #fffdf7; color: #6b5a33; cursor: pointer;
+  }
+  button:hover { background: #f3ead5; }
+</style>
+</head>
+<body>
+  <h1>米游社人机验证</h1>
+  <p id="who" hidden></p>
+  <p>实时便笺触发了米游社风控（1034）。<b>最新实测：这类风控只能去米游社 App 解除</b>，请在 App 里打开一次「我的 → 我的角色 → 实时便笺」，再回插件点「重新检测」。下方滑块可以再试，但多半会被服务端拒绝。</p>
+  <div id="captcha"></div>
+  <div class="status" id="status">正在加载验证组件…</div>
+  <div class="actions" id="actions" hidden>
+    <button type="button" id="btnRetry">重新加载验证</button>
+  </div>
+  <div class="tip">
+    验证由米游社官方极验组件提供，本页面只把验证结果回传给本机程序，不会保存或上传账号信息。<br>
+    若多次验证仍不出现滑块，可在米游社 App 打开一次「我的角色 → 实时便笺」，再回小组件点「立即同步」。
+  </div>
+
+  <!-- 本地 SDK 优先：避免 CDN 波动；失败时自动回退官方 CDN -->
+  <script src="../assets/gt.0.4.9.js" onerror="window.__sdkLocalFailed = true"></script>
+  <script>
+    var statusEl = document.getElementById('status');
+    var actionsEl = document.getElementById('actions');
+    var started = false;
+    var finished = false;
+    var watchdog = null;
+    var lastData = null;
+    var lastKey = '';
+
+    function setStatus(text, isError) {
+      statusEl.textContent = text;
+      statusEl.className = isError ? 'status error' : 'status';
+    }
+    function showActions() { actionsEl.hidden = false; }
+    function hideActions() { actionsEl.hidden = true; }
+
+    function loadSdk(callback) {
+      if (typeof window.initGeetest === 'function') { callback(true); return; }
+      var settled = false;
+      var done = function (ok) {
+        if (settled) return;
+        settled = true;
+        callback(ok);
+      };
+      var s = document.createElement('script');
+      s.src = 'https://static.geetest.com/static/js/gt.0.4.9.js';
+      s.onload = function () { done(typeof window.initGeetest === 'function'); };
+      s.onerror = function () { done(false); };
+      document.head.appendChild(s);
+      setTimeout(function () { done(typeof window.initGeetest === 'function'); }, 9000);
+    }
+
+    function fail(message) {
+      if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+      if (finished) return;
+      setStatus(message, true);
+      showActions();
+    }
+
+    function startCaptcha(data) {
+      lastData = data;
+      started = true;
+      finished = false;
+      hideActions();
+      setStatus('验证任务已到达，正在初始化…');
+      if (watchdog) clearTimeout(watchdog);
+      // 任何环节卡住都给出明确提示与重试入口，不再静默停在「正在初始化」
+      watchdog = setTimeout(function () {
+        fail('验证组件初始化超时，请检查网络后点「重新加载验证」；也可在米游社 App 打开一次实时便笺来解除风控。');
+      }, 15000);
+
+      loadSdk(function (sdkOk) {
+        if (!sdkOk) {
+          fail('验证组件加载失败，请检查网络后点「重新加载验证」。');
+          return;
+        }
+        try {
+          window.initGeetest({
+            gt: data.gt,
+            challenge: data.challenge,
+            new_captcha: Boolean(data.new_captcha),
+            // 关键：窗口由 file:// 加载，若不强制 https，极验会拼出
+            // file://api.geetest.com/... 导致请求永远失败、回调永不触发。
+            https: true,
+            // 米游社 success !== 1 表示极验服务不可用，需走离线模式（与官方前端一致）
+            offline: data.success !== 1,
+            product: 'float',
+            width: '100%'
+          }, function (captchaObj) {
+            if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+            captchaObj.appendTo('#captcha');
+            captchaObj.onReady(function () { setStatus('请完成上方滑块验证'); });
+            captchaObj.onSuccess(function () {
+              var result = captchaObj.getValidate();
+              if (!result || typeof result !== 'object') {
+                fail('未能读取验证结果，请点「重新加载验证」重试。');
+                return;
+              }
+              var keys = Object.keys(result);
+              if (!result.geetest_validate && !result.validate) {
+                // 组件版本差异可能返回别的结果结构，直接展示字段名便于定位
+                fail('验证结果格式异常（字段：' + (keys.join(', ') || '空') + '），请截图反馈，或点「重新加载验证」重试。');
+                return;
+              }
+              finished = true;
+              if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+              setStatus('验证通过，正在提交…');
+              window.verifyBridge.submit(result);
+            });
+            captchaObj.onError(function () {
+              fail('验证组件出错，请点「重新加载验证」重试。');
+            });
+          });
+        } catch (error) {
+          fail('初始化异常：' + error.message);
+        }
+      });
+    }
+
+    function handleInit(data) {
+      if (!data || !data.gt || !data.challenge) return;
+      var whoEl = document.getElementById('who');
+      if (data.accountLabel) {
+        whoEl.textContent = '当前验证账号：' + data.accountLabel;
+        whoEl.hidden = false;
+      }
+      // getInit 主动拉取与 did-finish-load 推送可能都到达，用任务标识去重；
+      // 重试会下发新的 challenge，因此可以正常重新初始化。
+      var key = data.gt + '|' + data.challenge;
+      if (key === lastKey) return;
+      lastKey = key;
+      started = false;
+      finished = false;
+      document.getElementById('captcha').innerHTML = '';
+      startCaptcha(data);
+    }
+
+    window.verifyBridge.onInit(handleInit);
+    if (typeof window.verifyBridge.onFailed === 'function') {
+      window.verifyBridge.onFailed(function (message) {
+        // 提交失败时窗口不关闭：重置状态并给出可直接重试的提示
+        finished = false;
+        lastKey = '';
+        fail('验证未通过：' + message + '。请点「重新加载验证」重新完成任务。');
+      });
+    }
+    // 主动拉取一次，消除 did-finish-load 与脚本注册的竞态
+    window.verifyBridge.getInit().then(handleInit).catch(function () {});
+    document.getElementById('btnRetry').onclick = function () {
+      setStatus('正在重新申请验证任务…');
+      hideActions();
+      window.verifyBridge.retry()
+        .then(function (res) {
+          if (!res || !res.ok) fail((res && res.message) || '重新申请失败，请关闭窗口后从托盘菜单重试。');
+        })
+        .catch(function (error) { fail('重新申请失败：' + error.message); });
+    };
+    setTimeout(function () {
+      if (!started) setStatus('验证任务尚未送达，请关闭窗口后从托盘菜单重新打开「验证当前用户」。', true);
+    }, 12000);
+  </script>
+</body>
+</html>

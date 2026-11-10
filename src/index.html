@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>原粹树脂 · 桌面小组件</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="widget" id="widget">
+
+  <header class="titlebar" id="dragHandle">
+    <div class="brand">
+      <span class="brand-mark">✦</span>
+      <span class="brand-text">原粹树脂</span>
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">加载中</span>
+    </div>
+    <div class="window-actions no-drag">
+      <button id="btnAccounts" class="accounts-btn" title="账号管理">◉<em id="accountCount" hidden>0</em></button>
+      <button id="btnRefresh" title="立即同步">⟳</button>
+      <button id="btnPin" title="固定在桌面">钉</button>
+      <button id="btnSettings" title="设置">⚙</button>
+      <button id="btnHide" title="隐藏到托盘">─</button>
+    </div>
+  </header>
+
+  <section class="view view-main" id="viewMain">
+    <div class="main-body" id="mainBody">
+
+      <div class="solo-card" id="soloCard">
+        <div class="solo-head" id="soloHead" hidden>
+          <span class="ac-avatar" id="soloAvatar">✦</span>
+          <span class="solo-id">
+            <b id="soloName">—</b>
+            <small id="soloUid"></small>
+          </span>
+          <span class="solo-sync" id="soloSync"></span>
+        </div>
+        <div class="hero">
+          <div class="hero-left">
+            <div class="resin-number">
+              <span id="resinValue">--</span><span class="resin-max">/ <span id="resinMax">200</span></span>
+            </div>
+            <div class="resin-label">ORIGINAL RESIN</div>
+            <div class="divider"></div>
+            <div class="metric">
+              <span class="metric-key">距离回满</span>
+              <span class="metric-value" id="fullCountdown">--:--:--</span>
+            </div>
+            <div class="metric">
+              <span class="metric-key">回满时刻</span>
+              <span class="metric-value small" id="fullClock">--</span>
+            </div>
+          </div>
+          <div class="hero-right">
+            <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" style="stop-color: var(--gold-2)"/>
+                  <stop offset="55%" style="stop-color: var(--gold)"/>
+                  <stop offset="100%" style="stop-color: var(--gold-deep)"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="ring-center">
+              <span class="ring-icon">◆</span>
+              <span class="ring-next-label">下一枚</span>
+              <span class="ring-next" id="nextCountdown">--:--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="multi-list" id="multiList" hidden></div>
+
+      <div class="extra" id="extraRow">
+        <span>委托 <b id="taskValue">--</b></span>
+        <span>派遣 <b id="expeditionValue">--</b></span>
+        <span>周本 <b id="discountValue">--</b></span>
+      </div>
+
+      <div class="local-hint" id="localHint" hidden>按每 8 分钟 +1 推算 · 从 0 回满 200 点需 26 小时 40 分</div>
+      <div class="alert" id="overflowAlert" hidden>⚠ 树脂即将溢出，记得上线消耗</div>
+      <div class="risk-bar" id="riskBar" hidden>
+        <span id="riskBarText"></span>
+        <button class="ghost tiny" id="btnRecheck">重新检测</button>
+        <button class="ghost tiny" id="btnVerify">验证</button>
+      </div>
+
+      <footer class="footbar">
+        <button class="link-btn" id="btnCalibrate">手动校准</button>
+        <button class="link-btn" id="btnAddAccountMain" hidden>＋ 添加账号</button>
+        <span class="spacer"></span>
+        <span class="source-tag" id="sourceTag">本地推算</span>
+      </footer>
+    </div>
+  </section>
+
+  <section class="view view-settings" id="viewSettings" hidden>
+    <div class="settings-head">
+      <button class="back-btn" id="btnBack" title="返回">←</button>
+      <h2>设置</h2>
+      <span class="hint">数据仅存本机</span>
+    </div>
+    <div class="settings-body">
+
+      <div class="field-group">
+        <label>数据来源</label>
+        <div class="radio-row">
+          <button class="seg" data-source="local">本地推算</button>
+          <button class="seg" data-source="mihoyo">米游社同步</button>
+          <button class="seg" data-source="custom">自定义接口</button>
+        </div>
+        <p class="desc" id="sourceDesc"></p>
+      </div>
+
+      <div class="panel" id="panelLocal">
+        <div class="row">
+          <label>当前树脂</label>
+          <input id="inResin" type="number" min="0" max="2000" placeholder="例如 148">
+        </div>
+        <div class="row">
+          <label>下一枚还需</label>
+          <input id="inNext" type="text" placeholder="可选，mm:ss">
+        </div>
+        <button class="primary" id="btnApplyCalibrate">保存校准</button>
+        <p class="desc">填一次就能一直用：之后按每 8 分钟 1 点自动增长，关机重开也会接着算。填「下一枚还需」可校准得更准。</p>
+      </div>
+
+      <div class="panel" id="panelMihoyo" hidden>
+        <div class="account-card">
+          <span class="account-avatar">✦</span>
+          <div class="account-meta">
+            <b id="accountLabel">未登录</b>
+            <small id="accountSub">扫码登录后可自动同步</small>
+          </div>
+          <button class="ghost tiny" id="btnLogout" hidden>移除</button>
+        </div>
+
+        <div class="account-section" id="accountSection" hidden>
+          <div class="section-head">
+            <span>已保存账号</span>
+            <span class="section-hint" id="accountTotal"></span>
+          </div>
+          <div class="acct-list compact" id="accountListSettings"></div>
+        </div>
+
+        <button class="primary wide" id="btnQrLogin">扫码登录米游社</button>
+        <p class="desc">米游社 App → 右上角「扫一扫」→ 手机上确认。会自动读取 UID 与服务器，凭证加密存本机；登录过期可用 stoken 自动续期，不用再复制 Cookie。</p>
+
+        <div class="row"><label>UID</label><input id="inUid" type="text" placeholder="扫码后自动填入"></div>
+        <div class="row">
+          <label>服务器</label>
+          <select id="inServer">
+            <option value="cn_gf01">官服 · 天空岛</option>
+            <option value="cn_qd01">渠道服 · 世界树</option>
+            <option value="os_asia">国际服 · 亚服</option>
+            <option value="os_euro">国际服 · 欧服</option>
+            <option value="os_usa">国际服 · 美服</option>
+            <option value="os_cht">国际服 · 港澳台</option>
+          </select>
+        </div>
+
+        <details class="advanced">
+          <summary>高级：手动填写 Cookie / 读取角色</summary>
+          <div class="row" style="margin-top:8px">
+            <label>Cookie <em id="cookieState"></em></label>
+            <textarea id="inCookie" rows="3" placeholder="粘贴米游社 Cookie；留空表示不修改"></textarea>
+          </div>
+          <button class="ghost" id="btnFetchRoles">读取我的角色</button>
+          <p class="desc">手动 Cookie 无法自动续期，建议优先扫码。Cookie 加密保存在本机，不回显界面，只发往米游社官方域名。</p>
+        </details>
+
+        <div class="risk-tip" id="riskTip" hidden>
+          <span id="riskText">⚠ 米游社风控：请在米游社 App 打开一次实时便笺。</span>
+          <button class="ghost tiny" id="btnVerifySettings">尝试滑块验证</button>
+        </div>
+        <p class="desc">若提示 5003 / 1034，说明触发了米游社设备校验或人机验证。点「验证当前用户」完成滑块即可恢复；也可以在米游社 App 打开一次「我的角色 → 实时便笺」后点刷新。</p>
+      </div>
+
+      <div class="panel" id="panelCustom" hidden>
+        <div class="row">
+          <label>接口 URL</label>
+          <input id="inCustomUrl" type="text" placeholder="https://your-api/resin">
+        </div>
+        <p class="desc">可接自建云函数或开源代理。支持米游社原始 JSON，也支持简化格式：{"resin":148,"max_resin":200,"resin_recovery_time":3600}。</p>
+      </div>
+
+      <div class="field-group">
+        <label>配色方案</label>
+        <div class="theme-row" id="themeRow">
+          <button class="theme-dot" data-theme="gold" title="金曜 · 默认"></button>
+          <button class="theme-dot" data-theme="frost" title="晨霜"></button>
+          <button class="theme-dot" data-theme="jade" title="翠玉"></button>
+          <button class="theme-dot" data-theme="sakura" title="樱花"></button>
+          <button class="theme-dot" data-theme="violet" title="暮紫"></button>
+          <button class="theme-dot" data-theme="graphite" title="石墨"></button>
+        </div>
+        <p class="desc" id="themeDesc">点一下立即换色，只影响本机外观。</p>
+      </div>
+
+      <div class="field-group">
+        <label>通用</label>
+        <div class="row"><label>恢复上限</label><input id="inMax" type="number" min="1" value="200"></div>
+        <div class="row"><label>溢出提醒阈值</label><input id="inNotify" type="number" min="1" value="190"></div>
+        <div class="row"><label>同步间隔（秒）</label><input id="inInterval" type="number" min="180" value="300"></div>
+        <p class="desc">建议 ≥ 300 秒。请求过密会触发米游社风控；同步失败后会自动拉长间隔。</p>
+        <div class="row scale-row">
+          <label>界面缩放</label>
+          <input id="inScale" type="range" min="70" max="180" step="5" value="100">
+          <button class="scale-reset" id="btnScaleReset" title="点击恢复 100%">100%</button>
+        </div>
+        <p class="desc">拖动滑块，或按住 Ctrl 滚动鼠标滚轮。窗口会等比缩放，排版与功能不受影响。</p>
+        <div class="switch-row"><label>固定在桌面</label><input id="inDeskPin" type="checkbox"></div>
+        <p class="desc">开启后挂在桌面壁纸上：不会被最大化的窗口挡住，也不会挡住你正在用的程序。与「始终置顶」互斥。</p>
+        <div class="switch-row"><label>始终置顶</label><input id="inTop" type="checkbox"></div>
+        <div class="switch-row"><label>开机自启</label><input id="inAutoStart" type="checkbox"></div>
+      </div>
+
+      <button class="primary wide" id="btnSave">保存并同步</button>
+      <p class="footnote">仅读取您本人账号的数据，不读取游戏内存、不修改游戏、不向任何第三方上传信息。米游社接口为非公开接口，可能随版本调整。</p>
+    </div>
+  </section>
+
+  <div class="calib-sheet" id="calibSheet" hidden>
+    <div class="sheet-head">
+      <span id="calibTitle">手动校准</span>
+      <button id="btnCalibClose" title="关闭">×</button>
+    </div>
+    <div class="calib-body">
+      <div class="calib-accounts" id="calibAccounts" hidden></div>
+      <div class="row">
+        <label>当前树脂</label>
+        <input id="inCalibResin" type="number" min="0" max="2000" placeholder="例如 148">
+      </div>
+      <div class="calib-chips" id="calibChips"></div>
+      <div class="row">
+        <label>下一枚还需</label>
+        <input id="inCalibNext" type="text" placeholder="可选，mm:ss">
+      </div>
+      <p class="desc" id="calibDesc">按游戏内实际数值填写即可。保存后按每 8 分钟 1 点自动推算，关机重开也会接着算。</p>
+      <div class="calib-actions">
+        <button class="ghost" id="btnCalibCancel">取消</button>
+        <button class="primary" id="btnCalibSave">保存校准</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="accounts-sheet" id="accountsSheet" hidden>
+    <div class="sheet-head">
+      <span>账号</span>
+      <button id="btnAccountsClose" title="关闭">×</button>
+    </div>
+    <div class="acct-list" id="accountListSheet"></div>
+    <div class="sheet-foot">
+      <button class="primary wide" id="btnAddAccount">＋ 添加账号（扫码登录）</button>
+    </div>
+  </div>
+
+  <div class="qr-overlay" id="qrOverlay" hidden>
+    <div class="qr-head">
+      <span>米游社扫码登录</span>
+      <button id="btnQrClose" title="关闭">×</button>
+    </div>
+    <div class="qr-body">
+      <div class="qr-frame">
+        <img id="qrImage" alt="米游社登录二维码">
+        <div class="qr-cover" id="qrCover" hidden></div>
+      </div>
+      <div class="qr-status" id="qrStatusText">正在生成二维码…</div>
+      <div class="qr-hint">米游社 App → 右上角「扫一扫」→ 在手机上点确认登录</div>
+      <div class="qr-mode" id="qrMode"></div>
+      <div class="qr-actions">
+        <button class="ghost" id="btnQrRefresh">刷新二维码</button>
+        <button class="ghost" id="btnQrCancel">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+</div>
+<script src="renderer.js"></script>
+</body>
+</html>
