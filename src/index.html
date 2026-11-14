@@ -86,6 +86,7 @@
       <div class="alert" id="overflowAlert" hidden>⚠ 树脂即将溢出，记得上线消耗</div>
       <div class="risk-bar" id="riskBar" hidden>
         <span id="riskBarText"></span>
+        <button class="ghost tiny" id="btnRiskCalib" hidden>校准</button>
         <button class="ghost tiny" id="btnRecheck">重新检测</button>
         <button class="ghost tiny" id="btnVerify">验证</button>
       </div>
@@ -178,7 +179,7 @@
           <span id="riskText">⚠ 米游社风控：请在米游社 App 打开一次实时便笺。</span>
           <button class="ghost tiny" id="btnVerifySettings">尝试滑块验证</button>
         </div>
-        <p class="desc">若提示 5003 / 1034，说明触发了米游社设备校验或人机验证。点「验证当前用户」完成滑块即可恢复；也可以在米游社 App 打开一次「我的角色 → 实时便笺」后点刷新。</p>
+        <p class="desc">1034 是账号风控，可在米游社 App 打开一次「我的角色 → 实时便笺」后解除；5003 是设备校验层的拒绝，重新扫码、滑块验证、换网络都不一定有效，此时请用「手动校准」记录当前树脂，小组件会按 8 分钟 1 点继续推算。</p>
       </div>
 
       <div class="panel" id="panelCustom" hidden>

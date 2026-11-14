@@ -10,8 +10,8 @@ const fs = require('node:fs');
 const os = require('node:os');
 const { spawn } = require('node:child_process');
 
-// 打包目录可能是 release/（默认）或 out/（临时构建）
-const BUILD_DIR = ['release', 'out']
+// 打包目录可能是 release/（默认）或 out162 / out（临时构建）
+const BUILD_DIR = ['release', 'out162', 'out']
   .map((d) => path.join(__dirname, d))
   .find((d) => fs.existsSync(path.join(d, 'win-unpacked', 'ResinWidget.exe'))) || path.join(__dirname, 'release');
 const EXE = path.join(BUILD_DIR, 'win-unpacked', 'ResinWidget.exe');

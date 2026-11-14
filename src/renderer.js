@@ -511,17 +511,29 @@ function render() {
   $('statusDot').style.color = STATUS_COLORS[status.kind] || STATUS_COLORS.idle;
 
   const needVerify = Boolean(status.needVerify) || /1034/.test(status.text || '');
+  // 5003 = 服务端设备层拒绝：滑块验证与重新登录都不能解除，只能靠本地校准兜底
+  const blocked = Boolean(status.blocked) || /5003/.test(status.text || '');
   const hasRisk = status.kind === 'error'
-    && (needVerify || /5003|1034|风控|指纹|验证/.test(status.text || ''));
+    && (blocked || needVerify || /风控|指纹|验证/.test(status.text || ''));
   const riskMessage = status.text || '米游社接口返回异常，请稍后重试';
   $('riskTip').hidden = !hasRisk;
   $('riskBar').hidden = !hasRisk;
-  $('riskText').textContent = needVerify
-    ? `⚠ ${riskMessage}。滑块验证目前多半会被服务端直接拒绝，建议先在 App 内打开一次实时便笺，再点「重新检测」。`
-    : `⚠ ${riskMessage}`;
-  $('riskBarText').textContent = needVerify ? '请先在米游社 App 打开一次实时便笺' : riskMessage;
+  if (blocked) {
+    $('riskText').textContent = '⚠ 米游社已限制本机读取实时便笺（5003）。这是服务端设备校验层的拒绝，重新登录、滑块验证、换指纹都无法解除。点「手动校准」填一次当前树脂，之后按 8 分钟 1 点本地推算，倒计时与溢出提醒仍然准确。';
+  } else {
+    $('riskText').textContent = needVerify
+      ? `⚠ ${riskMessage}。滑块验证目前多半会被服务端直接拒绝，建议先在 App 内打开一次实时便笺，再点「重新检测」。`
+      : `⚠ ${riskMessage}`;
+  }
+  $('riskBarText').textContent = blocked
+    ? '米游社限制读取 · 点「校准」填当前树脂'
+    : (needVerify ? '请先在米游社 App 打开一次实时便笺' : riskMessage);
   // 标题栏空间有限，风控时用短标签，完整说明留给提示条
-  if (hasRisk) $('statusText').textContent = needVerify ? '风控中' : '同步异常';
+  if (hasRisk) $('statusText').textContent = blocked ? '受限' : (needVerify ? '风控中' : '同步异常');
+  // 5003 时滑块验证没有意义，避免用户白跑一趟
+  if ($('btnVerify')) $('btnVerify').hidden = blocked;
+  if ($('btnVerifySettings')) $('btnVerifySettings').hidden = blocked;
+  if ($('btnRiskCalib')) $('btnRiskCalib').hidden = !blocked;
 
   $('sourceTag').textContent = isPreview
     ? '界面预览'
@@ -1195,6 +1207,9 @@ function bindUI() {
     bridge.windowAction('refresh');
     toast('正在重新检测…');
   };
+  if ($('btnRiskCalib')) {
+    $('btnRiskCalib').onclick = () => openCalib(state.config?.activeAccountId || '');
+  }
 
   $('btnQrLogin').onclick = () => beginQrLogin();
   $('btnQrClose').onclick = () => { hideQr(); bridge.qrCancel(); };

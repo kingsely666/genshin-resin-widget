@@ -692,7 +692,9 @@ async function fetchNoteWithRefresh() {
     return await api.fetchNote(priv, hooks);
   } catch (error) {
     if (error.needFpRefresh) {
-      // 5003：重新申请一枚指纹并立即重试一次；通常随后转为 1034（需验证）
+      // 5003：只换一枚新鲜指纹重试一次。再失败就停手——
+      // 实测该错误发生在设备校验层（错误 DS 也返回同一个 5003），
+      // 换 UA / client_type / device_id 格式都不会通过，反复请求只会加深风控标记。
       store.clearDeviceFp();
       const fp = await devicefp.acquireDeviceFp(priv);
       store.setDeviceFp(fp);
@@ -701,23 +703,10 @@ async function fetchNoteWithRefresh() {
         return await api.fetchNote(store.privateConfig, hooks);
       } catch (second) {
         if (second.needFpRefresh) {
-          // 设备标识可能已被标记：换一枚 deviceId 重新申请指纹，最后再试一次
-          store.resetDevice();
-          const rotated = await devicefp.acquireDeviceFp(store.privateConfig);
-          store.setDeviceFp(rotated);
-          logDiag('device identity rotated after repeated 5003');
-          try {
-            return await api.fetchNote(store.privateConfig, hooks);
-          } catch (third) {
-            if (third.needFpRefresh) {
-              // 账号级临时风控：指纹已合规但仍被挡，给出可操作提示并开放验证入口
-              const err = new Error('米游社设备风控（5003）：账号可能被临时限制，请点「验证当前用户」，或稍后再试 / 在米游社 App 打开一次实时便笺');
-              err.retcode = 5003;
-              err.needVerify = true;
-              throw err;
-            }
-            throw third;
-          }
+          const err = new Error('米游社已限制本机读取实时便笺（5003）');
+          err.retcode = 5003;
+          err.deviceBlocked = true;
+          throw err;
         }
         throw second;
       }
@@ -835,14 +824,25 @@ async function doSync(userInitiated) {
   }
 
   const message = lastError?.message || '同步失败';
+  const blocked = Boolean(lastError?.deviceBlocked);
   emitStatus({
     kind: 'error',
-    text: okCount ? `已同步 ${okCount}/${accounts.length}，部分账号失败` : message,
+    text: blocked
+      ? (okCount
+        ? `已同步 ${okCount}/${accounts.length} · 米游社限制本机读取`
+        : '米游社限制本机读取（5003）· 请手动校准')
+      : (okCount ? `已同步 ${okCount}/${accounts.length}，部分账号失败` : message),
     needVerify: Boolean(lastError?.needVerify),
     risk: Boolean(lastError?.risk),
+    blocked,
   });
-  if (!userInitiated && syncFailures < 3) { syncFailures += 1; rescheduleSync(); }
-  return { ok: false, message, needVerify: Boolean(lastError?.needVerify) };
+  // 5003 是服务端设备层拒绝，短时间内重复请求不会有不同结果，
+  // 直接把退避拉到上限（40 分钟）再试，避免持续撞门加重风控标记。
+  if (!userInitiated) {
+    syncFailures = blocked ? 3 : Math.min(3, syncFailures + 1);
+    rescheduleSync();
+  }
+  return { ok: false, message, needVerify: Boolean(lastError?.needVerify), blocked };
 }
 
 async function syncNow(userInitiated) {

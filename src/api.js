@@ -182,9 +182,13 @@ function noteError(json) {
     return err;
   }
   if (retcode === 5003) {
-    const err = new Error('设备校验未通过（5003）：正在刷新设备指纹后重试');
+    // 5003 是设备校验层的拒绝：错误码先于 DS 校验返回，换 UA / client_type /
+    // 指纹 / device_id 格式都无法绕过（实测 7 组组合全部 5003），
+    // 但同一 Cookie 的 binding 系列接口仍返回 0，说明登录态本身有效。
+    const err = new Error('米游社拒绝本机读取实时便笺（5003）');
     err.retcode = 5003;
     err.needFpRefresh = true;
+    err.deviceBlocked = true;
     return err;
   }
   const err = new Error(`[${retcode}] ${message || '接口返回异常'}`);

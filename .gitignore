@@ -2,6 +2,7 @@ node_modules/
 release/
 dist/
 out/
+out162/
 
 # 运行时/调试产物
 *.log

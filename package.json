@@ -1,6 +1,6 @@
 {
   "name": "genshin-resin-widget",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "private": true,
   "description": "桌面原粹树脂实时小组件，支持米游社扫码登录、设备指纹与人机验证",
   "main": "src/main.js",
